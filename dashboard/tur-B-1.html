@@ -530,20 +530,50 @@ function filtreliVeri() {
 /* ═══════════════════════════════════════════════════════
    KPI GÜNCELLE
    ═══════════════════════════════════════════════════════ */
+function uretimTekillesir(rows) {
+  // Aynı hat + tarih kombinasyonu birden fazla enerji tipi nedeniyle tekrarlanabilir.
+  // Her hat+tarih için üretimi yalnızca bir kez say.
+  const map = {};
+  rows.forEach(r => {
+    const k = r.hat + '||' + (r.tarih ? r.tarih.getTime() : r.tarihHam);
+    if (!(k in map)) map[k] = r.uretim || 0;
+  });
+  return Object.values(map).reduce((t, v) => t + v, 0);
+}
+
 function kpiGuncelle(veri) {
   const topTuketim = veri.reduce((t, r) => t + (r.tuketim || 0), 0);
-  const topUretim  = veri.reduce((t, r) => t + (r.uretim  || 0), 0);
   const topCo2     = veri.reduce((t, r) => t + (r.co2     || 0), 0);
-  const birimKwh   = topUretim > 0 ? topTuketim / topUretim : NaN;
 
-  // Sapma: toplam birimKwh vs üretim-ağırlıklı ortalama hedef
-  const gecerli = veri.filter(r => !isNaN(r.hedef) && r.hedef > 0 && r.uretim > 0);
-  const topHedefAdet = gecerli.reduce((t, r) => t + r.hedef * r.uretim, 0);
-  const topUretimGecerli = gecerli.reduce((t, r) => t + r.uretim, 0);
-  const ortHedef = topUretimGecerli > 0 ? topHedefAdet / topUretimGecerli : NaN;
-  const ortSapma = (!isNaN(birimKwh) && !isNaN(ortHedef) && ortHedef > 0)
-    ? (birimKwh - ortHedef) / ortHedef * 100
-    : NaN;
+  // Üretimi tekilleştir: aynı hat+tarih Elektrik+Doğalgaz satırlarında çift sayılmasın
+  const topUretim = uretimTekillesir(veri);
+  const birimKwh  = topUretim > 0 ? topTuketim / topUretim : NaN;
+
+  // Hedef Sapma: her enerji tipi için ayrı hesapla, sonra tüketim ağırlıklı birleştir
+  const tipler = [...new Set(veri.map(r => r.enerjiTipi).filter(Boolean))];
+  let ortSapma = NaN;
+  if (tipler.length > 0) {
+    const tipSonuclari = tipler.map(tip => {
+      const rows = veri.filter(r => r.enerjiTipi === tip);
+      const tipTuketim = rows.reduce((t, r) => t + (r.tuketim || 0), 0);
+      const tipUretim  = uretimTekillesir(rows);
+      const tipBirimKwh = tipUretim > 0 ? tipTuketim / tipUretim : NaN;
+      const gecerli = rows.filter(r => r.hedef > 0 && r.uretim > 0);
+      const hedefAdet = gecerli.reduce((t, r) => t + r.hedef * r.uretim, 0);
+      const uretimGecerli = gecerli.reduce((t, r) => t + r.uretim, 0);
+      const ortHedef = uretimGecerli > 0 ? hedefAdet / uretimGecerli : NaN;
+      const sapma = (!isNaN(tipBirimKwh) && ortHedef > 0)
+        ? (tipBirimKwh - ortHedef) / ortHedef * 100 : NaN;
+      return { sapma, tuketim: tipTuketim };
+    }).filter(x => !isNaN(x.sapma));
+
+    if (tipSonuclari.length > 0) {
+      const topTip = tipSonuclari.reduce((t, x) => t + x.tuketim, 0);
+      ortSapma = topTip > 0
+        ? tipSonuclari.reduce((t, x) => t + x.sapma * x.tuketim / topTip, 0)
+        : tipSonuclari.reduce((t, x) => t + x.sapma, 0) / tipSonuclari.length;
+    }
+  }
 
   // KPI kartları
   setKpi('kpi-toplam-tuketim', fmtSayi(topTuketim, 0) + ' kWh', '', '');
@@ -583,15 +613,15 @@ function setKpi(id, deger, alt, badge) {
    E2: TREND GRAFİĞİ
    ═══════════════════════════════════════════════════════ */
 function trendGrafiginiGuncelle(veri) {
-  // Tarihe göre sırala, günlük ortalama birimKwh
+  // Günlük toplamlar; üretim hat bazında tekilleştirilir
   const gunluk = {};
   veri.forEach(r => {
     const k = fmtTarih(r.tarih);
-    if (!gunluk[k]) gunluk[k] = { tuketim: 0, uretim: 0, hedef: 0, n: 0 };
+    if (!gunluk[k]) gunluk[k] = { tuketim: 0, uretimMap: {}, hedefToplam: 0, hedefN: 0 };
     gunluk[k].tuketim += r.tuketim || 0;
-    gunluk[k].uretim  += r.uretim  || 0;
-    gunluk[k].hedef   += r.hedef   || 0;
-    gunluk[k].n++;
+    const hatK = r.hat + '||' + (r.tarih ? r.tarih.getTime() : '');
+    if (!(hatK in gunluk[k].uretimMap)) gunluk[k].uretimMap[hatK] = r.uretim || 0;
+    if (r.hedef > 0) { gunluk[k].hedefToplam += r.hedef; gunluk[k].hedefN++; }
   });
 
   const etiketler = Object.keys(gunluk).sort((a,b) => {
@@ -599,13 +629,14 @@ function trendGrafiginiGuncelle(veri) {
     return da - db;
   });
 
-  const birimKwhDizi  = etiketler.map(k => {
+  const birimKwhDizi = etiketler.map(k => {
     const g = gunluk[k];
-    return g.uretim > 0 ? +(g.tuketim / g.uretim).toFixed(3) : null;
+    const uretim = Object.values(g.uretimMap).reduce((t, v) => t + v, 0);
+    return uretim > 0 ? +(g.tuketim / uretim).toFixed(3) : null;
   });
   const hedefDizi = etiketler.map(k => {
     const g = gunluk[k];
-    return g.n > 0 ? +(g.hedef / g.n).toFixed(3) : null;
+    return g.hedefN > 0 ? +(g.hedefToplam / g.hedefN).toFixed(3) : null;
   });
 
   const ctx = document.getElementById('trend-grafik').getContext('2d');
