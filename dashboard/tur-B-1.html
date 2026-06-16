@@ -287,11 +287,15 @@
 </div>
 
 <script>
-const CSV_URL = './veri.csv';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/1xB9uTcdJtLHyOrefS36OJU-HOGvdKEZ0U9FneN-5FwQ/export?format=csv&gid=938135206';
 
 function parseNum(s) {
   if (!s && s !== 0) return NaN;
-  return parseFloat(String(s).replace(/\./g, '').replace(',', '.'));
+  // Hem Türkçe (1.234,56) hem İngilizce (1,234.56) format desteği
+  const str = String(s).trim();
+  if (/^-?[\d.]+,[\d]+$/.test(str)) return parseFloat(str.replace(/\./g, '').replace(',', '.'));
+  if (/^-?[\d,]+\.[\d]+$/.test(str)) return parseFloat(str.replace(/,/g, ''));
+  return parseFloat(str.replace(/[^\d.-]/g, ''));
 }
 function fmtSayi(n, decimal = 0) {
   if (isNaN(n) || n === null) return '—';
@@ -321,7 +325,7 @@ function durumHesapla(sapma) {
   return              { etiket: '▲ Hedef Üstü',     sinif: 'kotu' };
 }
 
-function csvSatirParse(satir, ayrac = ';') {
+function csvSatirParse(satir, ayrac = ',') {
   const sonuc = []; let alan = '', tirnak = false;
   for (let i = 0; i < satir.length; i++) {
     const c = satir[i];
@@ -334,17 +338,19 @@ function csvSatirParse(satir, ayrac = ';') {
 function ayracTespit(ilkSatir) {
   const nv = (ilkSatir.match(/;/g) || []).length;
   const v  = (ilkSatir.match(/,/g) || []).length;
-  return nv >= v ? ';' : ',';
+  return nv > v ? ';' : ',';
 }
 function csvParse(metin) {
-  const satirlar = metin.split(/\r?\n/).filter(s => s.trim());
+  // BOM temizle
+  const temiz = metin.replace(/^﻿/, '');
+  const satirlar = temiz.split(/\r?\n/).filter(s => s.trim());
   if (satirlar.length < 2) return [];
   const ayrac = ayracTespit(satirlar[0]);
   const basliklar = csvSatirParse(satirlar[0], ayrac).map(b => b.toLowerCase().trim());
   return satirlar.slice(1).map(s => {
     const degerler = csvSatirParse(s, ayrac);
     const obj = {};
-    basliklar.forEach((b, i) => { obj[b] = degerler[i] || ''; });
+    basliklar.forEach((b, i) => { obj[b] = degerler[i] !== undefined ? degerler[i] : ''; });
     return obj;
   });
 }
@@ -366,10 +372,10 @@ function veriIsle(satirlar) {
     tarih      : kolonBul(basliklar, ['tarih','date']),
     hat        : kolonBul(basliklar, ['hat']),
     enerjitipi : kolonBul(basliklar, ['enerji tipi','enerjitipi','tip','type']),
-    tuketim    : kolonBul(basliklar, ['tüketim (kwh)','tuketim (kwh)','tüketim','tuketim','kwh']),
-    uretim     : kolonBul(basliklar, ['üretim adedi','uretim adedi','üretim','uretim','adet']),
-    hedef      : kolonBul(basliklar, ['hedef kwh/birim','hedef kwh','hedef']),
-    co2faktör  : kolonBul(basliklar, ['co2 faktörü','co2 faktoru','co2']),
+    tuketim    : kolonBul(basliklar, ['tüketim (kwh)','tuketim (kwh)','tüketim','tuketim','consumption','kwh']),
+    uretim     : kolonBul(basliklar, ['üretim adedi','uretim adedi','üretim','uretim','production','adet','qty']),
+    hedef      : kolonBul(basliklar, ['hedef kwh/birim','hedef kwh','hedef','target']),
+    co2faktör  : kolonBul(basliklar, ['co2 faktörü','co2 faktoru','co2','karbon']),
   };
   return satirlar.map(s => {
     const tuketim    = parseNum(s[kolonlar.tuketim]);
