@@ -230,6 +230,10 @@
       <select id="hat-filtre"><option value="">Tümü</option></select>
     </div>
     <div class="filtre-grup">
+      <label for="tip-filtre">Enerji Tipi:</label>
+      <select id="tip-filtre"><option value="">Tümü</option></select>
+    </div>
+    <div class="filtre-grup">
       <label for="donem-filtre">Başlangıç:</label>
       <input type="date" id="baslangic-filtre" />
     </div>
@@ -308,6 +312,7 @@
             <tr>
               <th>Tarih</th>
               <th>Hat</th>
+              <th>Enerji Tipi</th>
               <th>Tüketim (kWh)</th>
               <th>Üretim (Adet)</th>
               <th>Birim kWh</th>
@@ -330,17 +335,17 @@
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   CONNECTOR – Google Sheets CSV
+   CONNECTOR – Yerel CSV dosyası
    ═══════════════════════════════════════════════════════ */
-const SHEET_ID = '1TJhtTa_dKQMd5e7Hc1egCZD0r2gmcJb6czbyazmjbA4';
-const CSV_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&id=${SHEET_ID}`;
+const CSV_URL = './veri.csv';
 
 /* ═══════════════════════════════════════════════════════
    YARDIMCI FONKSİYONLAR
    ═══════════════════════════════════════════════════════ */
 function parseNum(s) {
   if (!s && s !== 0) return NaN;
-  return parseFloat(String(s).replace(/[^\d.,-]/g, '').replace(',', '.'));
+  // Türkçe format: "1.234,56" → 1234.56
+  return parseFloat(String(s).replace(/\./g, '').replace(',', '.'));
 }
 
 function fmtSayi(n, decimal = 0) {
@@ -379,25 +384,32 @@ function durumHesapla(sapma) {
 /* ═══════════════════════════════════════════════════════
    CSV PARSE
    ═══════════════════════════════════════════════════════ */
-function csvSatirParse(satir) {
+function csvSatirParse(satir, ayrac = ';') {
   const sonuc = [];
   let alan = '', tirnak = false;
   for (let i = 0; i < satir.length; i++) {
     const c = satir[i];
     if (c === '"') { tirnak = !tirnak; continue; }
-    if (c === ',' && !tirnak) { sonuc.push(alan.trim()); alan = ''; continue; }
+    if (c === ayrac && !tirnak) { sonuc.push(alan.trim()); alan = ''; continue; }
     alan += c;
   }
   sonuc.push(alan.trim());
   return sonuc;
 }
 
+function ayracTespit(ilkSatir) {
+  const noktaliVirgul = (ilkSatir.match(/;/g) || []).length;
+  const virgul        = (ilkSatir.match(/,/g) || []).length;
+  return noktaliVirgul >= virgul ? ';' : ',';
+}
+
 function csvParse(metin) {
   const satirlar = metin.split(/\r?\n/).filter(s => s.trim());
   if (satirlar.length < 2) return [];
-  const basliklar = csvSatirParse(satirlar[0]).map(b => b.toLowerCase().trim());
+  const ayrac = ayracTespit(satirlar[0]);
+  const basliklar = csvSatirParse(satirlar[0], ayrac).map(b => b.toLowerCase().trim());
   return satirlar.slice(1).map(s => {
-    const degerler = csvSatirParse(s);
+    const degerler = csvSatirParse(s, ayrac);
     const obj = {};
     basliklar.forEach((b, i) => { obj[b] = degerler[i] || ''; });
     return obj;
@@ -439,27 +451,30 @@ function veriIsle(satirlar) {
 
   // Kolon tespiti
   kolonlar = {
-    tarih     : kolonBul(basliklar, ['tarih','date','gün','gun']),
-    hat       : kolonBul(basliklar, ['hat','line','hat_adı','hat_adi']),
-    tuketim   : kolonBul(basliklar, ['tüketim','tuketim','kwh','consumption','enerji']),
-    uretim    : kolonBul(basliklar, ['üretim','uretim','adet','production','miktar','qty']),
-    hedef     : kolonBul(basliklar, ['hedef','target','hedef_kwh','hedef kwh']),
-    co2faktör : kolonBul(basliklar, ['co2','co₂','karbon','faktör','faktor']),
+    tarih      : kolonBul(basliklar, ['tarih','date']),
+    hat        : kolonBul(basliklar, ['hat']),
+    enerjitipi : kolonBul(basliklar, ['enerji tipi','enerjitipi','tip','type']),
+    tuketim    : kolonBul(basliklar, ['tüketim (kwh)','tuketim (kwh)','tüketim','tuketim','kwh']),
+    uretim     : kolonBul(basliklar, ['üretim adedi','uretim adedi','üretim','uretim','adet']),
+    hedef      : kolonBul(basliklar, ['hedef kwh/birim','hedef kwh','hedef']),
+    co2faktör  : kolonBul(basliklar, ['co2 faktörü','co2 faktoru','co2']),
   };
 
   return satirlar.map(s => {
-    const tuketim  = parseNum(s[kolonlar.tuketim]);
-    const uretim   = parseNum(s[kolonlar.uretim]);
-    const hedef    = parseNum(s[kolonlar.hedef]);
-    const co2f     = parseNum(s[kolonlar.co2faktör]) || 0.415; // varsayılan TR faktörü
-    const birimKwh = (uretim && uretim > 0) ? tuketim / uretim : NaN;
-    const sapma    = (!isNaN(birimKwh) && hedef > 0) ? ((birimKwh - hedef) / hedef) * 100 : NaN;
-    const co2      = (!isNaN(tuketim)) ? (tuketim * co2f) / 1000 : NaN; // ton
+    const tuketim    = parseNum(s[kolonlar.tuketim]);
+    const uretim     = parseNum(s[kolonlar.uretim]);
+    const hedef      = parseNum(s[kolonlar.hedef]);
+    const co2f       = parseNum(s[kolonlar.co2faktör]) || 0.415;
+    const enerjiTipi = (s[kolonlar.enerjitipi] || '').trim();
+    const birimKwh   = (uretim && uretim > 0) ? tuketim / uretim : NaN;
+    const sapma      = (!isNaN(birimKwh) && hedef > 0) ? ((birimKwh - hedef) / hedef) * 100 : NaN;
+    const co2        = (!isNaN(tuketim)) ? (tuketim * co2f) / 1000 : NaN;
 
     return {
-      tarihHam : s[kolonlar.tarih] || '',
-      tarih    : parseTarih(s[kolonlar.tarih]),
-      hat      : (s[kolonlar.hat] || 'Bilinmeyen').trim(),
+      tarihHam  : s[kolonlar.tarih] || '',
+      tarih     : parseTarih(s[kolonlar.tarih]),
+      hat       : (s[kolonlar.hat] || 'Bilinmeyen').trim(),
+      enerjiTipi,
       tuketim,
       uretim,
       hedef,
@@ -467,7 +482,7 @@ function veriIsle(satirlar) {
       birimKwh,
       sapma,
       co2,
-      ham      : s,
+      ham       : s,
     };
   }).filter(r => r.tarih && !isNaN(r.tuketim));
 }
@@ -476,14 +491,16 @@ function veriIsle(satirlar) {
    FİLTRELEME
    ═══════════════════════════════════════════════════════ */
 function filtreliVeri() {
-  const hat = document.getElementById('hat-filtre').value;
-  const bas = document.getElementById('baslangic-filtre').value;
-  const bit = document.getElementById('bitis-filtre').value;
+  const hat  = document.getElementById('hat-filtre').value;
+  const tip  = document.getElementById('tip-filtre').value;
+  const bas  = document.getElementById('baslangic-filtre').value;
+  const bit  = document.getElementById('bitis-filtre').value;
   const sira = document.getElementById('siralama').value;
 
   let veri = [...tumVeri];
 
   if (hat)  veri = veri.filter(r => r.hat === hat);
+  if (tip)  veri = veri.filter(r => r.enerjiTipi === tip);
   if (bas)  { const d = new Date(bas); veri = veri.filter(r => r.tarih >= d); }
   if (bit)  { const d = new Date(bit); d.setHours(23,59,59); veri = veri.filter(r => r.tarih <= d); }
 
@@ -706,7 +723,7 @@ function kirilimGrafiginiGuncelle(veri) {
 function tabloGuncelle(veri) {
   const tbody = document.getElementById('detay-tbody');
   if (!veri.length) {
-    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:20px;color:#90A4AE">
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:20px;color:#90A4AE">
       📋 Gösterilecek kayıt bulunamadı. Filtre ayarlarını kontrol edin.</td></tr>`;
     return;
   }
@@ -718,6 +735,7 @@ function tabloGuncelle(veri) {
     return `<tr>
       <td>${fmtTarih(r.tarih)}</td>
       <td>${r.hat}</td>
+      <td>${r.enerjiTipi || '—'}</td>
       <td>${fmtSayi(r.tuketim, 0)}</td>
       <td>${fmtSayi(r.uretim,  0)}</td>
       <td>${fmtSayi(r.birimKwh, 3)}</td>
@@ -738,6 +756,11 @@ function filtreDoldur() {
   const hatSec = document.getElementById('hat-filtre');
   hatSec.innerHTML = '<option value="">Tümü</option>' +
     hatlar.map(h => `<option value="${h}">${h}</option>`).join('');
+
+  const tipler = [...new Set(tumVeri.map(r => r.enerjiTipi).filter(Boolean))].sort();
+  const tipSec = document.getElementById('tip-filtre');
+  tipSec.innerHTML = '<option value="">Tümü</option>' +
+    tipler.map(t => `<option value="${t}">${t}</option>`).join('');
 
   if (tumVeri.length) {
     const tarihler = tumVeri.map(r => r.tarih).filter(Boolean).sort((a,b)=>a-b);
@@ -815,10 +838,11 @@ async function veriYukle() {
 /* ═══════════════════════════════════════════════════════
    BAŞLATMA
    ═══════════════════════════════════════════════════════ */
-document.getElementById('hat-filtre').addEventListener('change',    panelleriGuncelle);
+document.getElementById('hat-filtre').addEventListener('change',      panelleriGuncelle);
+document.getElementById('tip-filtre').addEventListener('change',      panelleriGuncelle);
 document.getElementById('baslangic-filtre').addEventListener('change', panelleriGuncelle);
-document.getElementById('bitis-filtre').addEventListener('change',  panelleriGuncelle);
-document.getElementById('siralama').addEventListener('change',      panelleriGuncelle);
+document.getElementById('bitis-filtre').addEventListener('change',     panelleriGuncelle);
+document.getElementById('siralama').addEventListener('change',         panelleriGuncelle);
 
 veriYukle();
 
