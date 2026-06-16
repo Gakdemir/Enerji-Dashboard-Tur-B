@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VALEO Enerji Dashboard — S6</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--blue:#2563eb;--blue-light:#dbeafe;--gray:#6b7280;--gray-light:#f3f4f6;--green:#16a34a;--red:#dc2626;--orange:#ea580c;--bg:#f8fafc;--card:#fff;--text:#1e293b;--border:#e2e8f0}
@@ -123,24 +122,101 @@ table.action tr:hover{background:var(--blue-light)}
 const CSV_URL='https://docs.google.com/spreadsheets/d/1xB9uTcdJtLHyOrefS36OJU-HOGvdKEZ0U9FneN-5FwQ/export?format=csv&gid=938135206';
 let RAW=[],charts={};
 
-function parseNum(s){if(!s)return 0;return parseFloat(String(s).replace(/\./g,'').replace(',','.'))||0}
+function parseNum(s){
+  if(!s&&s!==0)return 0;
+  const str=String(s).trim();
+  if(!str||str==='-')return 0;
+  const hasPeriod=str.includes('.');
+  const hasComma=str.includes(',');
+  if(hasPeriod&&hasComma){
+    return str.indexOf('.')<str.indexOf(',')
+      ?parseFloat(str.replace(/\./g,'').replace(',','.'))
+      :parseFloat(str.replace(/,/g,''));
+  }
+  if(hasComma&&!hasPeriod)return parseFloat(str.replace(',','.'));
+  if(hasPeriod&&!hasComma){
+    const parts=str.replace(/^-/,'').split('.');
+    if(parts.length===2&&parts[1].length===3&&parts[0]!=='0')
+      return parseFloat(str.replace(/\./g,''));
+    return parseFloat(str);
+  }
+  return parseFloat(str)||0;
+}
+
 function fmtNum(n,d=0){return n.toLocaleString('tr-TR',{minimumFractionDigits:d,maximumFractionDigits:d})}
-function fmtDate(iso){const p=iso.split('-');return p[2]+'.'+p[1]+'.'+p[0]}
+function fmtDate(iso){if(!iso)return'—';const p=String(iso).split('-');if(p.length!==3)return iso;return p[2]+'.'+p[1]+'.'+p[0]}
+
+function csvSatirParse(satir,ayrac){
+  const sonuc=[];let alan='',tirnak=false;
+  for(let i=0;i<satir.length;i++){
+    const c=satir[i];
+    if(c==='"'){tirnak=!tirnak;continue}
+    if(c===ayrac&&!tirnak){sonuc.push(alan.trim());alan='';continue}
+    alan+=c;
+  }
+  sonuc.push(alan.trim());
+  return sonuc;
+}
+
+function ayracTespit(ilkSatir){
+  const sc=(ilkSatir.match(/;/g)||[]).length;
+  const vc=(ilkSatir.match(/,/g)||[]).length;
+  return sc>=vc?';':',';
+}
+
+function csvParse(metin){
+  const satirlar=metin.split(/\r?\n/).filter(s=>s.trim());
+  if(satirlar.length<2)return[];
+  const ayrac=ayracTespit(satirlar[0]);
+  const basliklar=csvSatirParse(satirlar[0],ayrac).map(b=>b.toLowerCase().trim());
+  return satirlar.slice(1).map(s=>{
+    const degerler=csvSatirParse(s,ayrac);
+    const obj={};
+    basliklar.forEach((b,i)=>{obj[b]=degerler[i]||''});
+    return obj;
+  });
+}
+
+function kolonBul(basliklar,adaylar){
+  for(const aday of adaylar){
+    const b=basliklar.find(b=>b.includes(aday.toLowerCase()));
+    if(b)return b;
+  }
+  return null;
+}
 
 document.getElementById('loading').style.display='block';
-Papa.parse(CSV_URL,{download:true,header:true,delimiter:';',skipEmptyLines:true,
-  complete(r){
+
+fetch(CSV_URL)
+  .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()})
+  .then(metin=>{
     document.getElementById('loading').style.display='none';
-    if(!r.data||!r.data.length){document.getElementById('empty').style.display='block';return}
-    RAW=r.data.map(d=>({
-      tarih:d['Tarih']||'',
-      hat:d['Hat']||'',
-      tip:d['Enerji Tipi']||'',
-      tuketim:parseNum(d['Tüketim (kWh)']),
-      uretim:parseNum(d['Üretim Adedi']),
-      hedef:parseNum(d['Hedef kWh/birim']),
-      co2f:parseNum(d['CO2 Faktörü'])
+    const satirlar=csvParse(metin);
+    if(!satirlar.length){document.getElementById('empty').style.display='block';return}
+
+    const basliklar=Object.keys(satirlar[0]);
+    const kol={
+      tarih:kolonBul(basliklar,['tarih','date']),
+      hat:kolonBul(basliklar,['hat']),
+      tip:kolonBul(basliklar,['enerji tipi','enerjitipi','tip','type']),
+      tuketim:kolonBul(basliklar,['tüketim (kwh)','tuketim (kwh)','tüketim','tuketim','kwh']),
+      uretim:kolonBul(basliklar,['üretim adedi','uretim adedi','üretim','uretim','adet']),
+      hedef:kolonBul(basliklar,['hedef kwh/birim','hedef kwh','hedef']),
+      co2f:kolonBul(basliklar,['co2 faktörü','co2 faktoru','co2'])
+    };
+
+    RAW=satirlar.map(d=>({
+      tarih:(d[kol.tarih]||'').trim(),
+      hat:(d[kol.hat]||'').trim(),
+      tip:(d[kol.tip]||'').trim(),
+      tuketim:parseNum(d[kol.tuketim]),
+      uretim:parseNum(d[kol.uretim]),
+      hedef:parseNum(d[kol.hedef]),
+      co2f:parseNum(d[kol.co2f])||0.415
     })).filter(d=>d.tarih);
+
+    if(!RAW.length){document.getElementById('empty').style.display='block';return}
+
     const hats=[...new Set(RAW.map(d=>d.hat))].sort();
     const tips=[...new Set(RAW.map(d=>d.tip))].sort();
     hats.forEach(h=>{const o=document.createElement('option');o.value=h;o.textContent=h;document.getElementById('filterHat').appendChild(o)});
@@ -149,9 +225,13 @@ Papa.parse(CSV_URL,{download:true,header:true,delimiter:';',skipEmptyLines:true,
     document.getElementById('lastUpdate').textContent=fmtDate(dates[dates.length-1]);
     document.getElementById('mainContent').style.display='';
     render();
-  },
-  error(){document.getElementById('loading').style.display='none';document.getElementById('error').style.display='block'}
-});
+  })
+  .catch(e=>{
+    console.error('Veri yükleme hatası:',e);
+    document.getElementById('loading').style.display='none';
+    document.getElementById('error').style.display='block';
+    document.getElementById('error').innerHTML='⚠ Veri yüklenemedi: '+e.message+'<br><small>Google Sheets paylaşım ayarını kontrol edin.</small>';
+  });
 
 document.getElementById('filterHat').onchange=render;
 document.getElementById('filterEnerji').onchange=render;
@@ -252,7 +332,7 @@ function render(){
     else if(r.sapma>5){cls='orange';lbl='🟠 Uyarı';warnCount++}
     else{cls='green';lbl='🟢 Hedefte';okCount++}
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${fmtDate(r.tarih)}</td><td>${r.hat}</td><td>${r.tip}</td><td>${fmtNum(r.gerceklesen,2)}</td><td>${fmtNum(r.hedef,2)}</td><td>${r.sapma>=0?'+':''}${fmtNum(r.sapma,1)} %</td><td><span class="badge ${cls}">${lbl}</span></td>`;
+    tr.innerHTML='<td>'+fmtDate(r.tarih)+'</td><td>'+r.hat+'</td><td>'+r.tip+'</td><td>'+fmtNum(r.gerceklesen,2)+'</td><td>'+fmtNum(r.hedef,2)+'</td><td>'+(r.sapma>=0?'+':'')+fmtNum(r.sapma,1)+' %</td><td><span class="badge '+cls+'">'+lbl+'</span></td>';
     tbody.appendChild(tr);
   });
   document.getElementById('k4a').textContent=critCount;
