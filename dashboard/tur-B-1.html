@@ -89,7 +89,7 @@
     #icerik {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto 1fr;
+      grid-template-rows: auto minmax(0, 2fr) minmax(0, 1.2fr);
       gap: 8px;
       min-height: 0;
     }
@@ -304,7 +304,7 @@
     </div>
 
     <!-- E4: DETAY / AKSİYON -->
-    <div class="panel" id="e4" style="grid-column: 1 / -1;">
+    <div class="panel" id="e4" style="grid-column: 1 / -1; grid-row: 3;">
       <div class="panel-baslik"><span class="rozet">E4</span> Detay / Aksiyon Tablosu</div>
       <div class="tablo-sarici">
         <table id="detay-tablo">
