@@ -1,382 +1,768 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VALEO Enerji Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:14px}
-.header{background:#1a1a2e;color:#fff;padding:12px 24px;display:flex;justify-content:space-between;align-items:center}
-.header h1{font-size:18px;font-weight:600}
-.header .meta{font-size:12px;opacity:.8}
-.filters{background:#fff;padding:10px 24px;display:flex;gap:12px;align-items:center;border-bottom:1px solid #ddd;flex-wrap:wrap}
-.filters label{font-size:12px;font-weight:600;color:#555}
-.filters select{padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:13px}
-.main{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto;gap:12px;padding:16px 24px;height:calc(100vh - 100px);overflow:hidden}
-.card{background:#fff;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.e1{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-.kpi{background:#fff;border-radius:8px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-align:center}
-.kpi .label{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.kpi .value{font-size:22px;font-weight:700;color:#1a1a2e}
-.kpi .sub{font-size:11px;margin-top:4px;font-weight:600}
-.kpi .icon{font-size:16px;margin-bottom:4px}
-.up{color:#d32f2f}.down{color:#2e7d32}.neutral{color:#1565c0}
-.badge{display:inline-block;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-top:2px}
-.badge-red{background:#fdecea;color:#d32f2f}
-.badge-green{background:#e8f5e9;color:#2e7d32}
-.badge-blue{background:#e3f2fd;color:#1565c0}
-.e2{min-height:0}
-.e3{min-height:0}
-.e4{grid-column:1/-1;overflow:auto;max-height:220px}
-.section-title{font-size:13px;font-weight:700;margin-bottom:8px;color:#1a1a2e;display:flex;align-items:center;gap:6px}
-.section-title span{font-size:14px}
-.chart-wrap{position:relative;width:100%;height:calc(100% - 28px)}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{background:#f5f5f5;padding:6px 8px;text-align:left;font-weight:600;position:sticky;top:0;border-bottom:2px solid #ddd}
-td{padding:5px 8px;border-bottom:1px solid #eee}
-tr:hover td{background:#f8f9ff}
-.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
-.dot-red{background:#d32f2f}.dot-green{background:#2e7d32}.dot-yellow{background:#f9a825}
-.state-overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,.92);z-index:100}
-.spinner{width:36px;height:36px;border:3px solid #e0e0e0;border-top-color:#1565c0;border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.state-msg{margin-top:10px;font-size:14px;color:#666}
-.error-msg{color:#d32f2f;font-weight:600}
-@media(max-width:900px){
-  .main{grid-template-columns:1fr;height:auto;overflow:auto}
-  .e1{grid-template-columns:repeat(2,1fr)}
-  .e4{max-height:300px}
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enerji Dashboard – VALEO (B-2)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mavi: #1565C0;
+      --mavi-ac: #1E88E5;
+      --gri: #90A4AE;
+      --yesil: #2E7D32;
+      --kirmizi: #C62828;
+      --sari: #F9A825;
+      --arka: #F0F4F8;
+      --kart: #FFFFFF;
+      --yazi: #1A2332;
+      --yazi2: #546E7A;
+      --kenar: #CFD8DC;
+      --font: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font);
+      background: var(--arka);
+      color: var(--yazi);
+      font-size: 14px;
+      overflow: hidden;
+    }
+
+    #uygulama {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      height: 100vh;
+      padding: 10px 14px;
+      gap: 8px;
+    }
+
+    #baslik-alani {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--mavi);
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px 18px;
+    }
+    #baslik-alani h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: .3px; }
+    #baslik-alani .meta { font-size: .78rem; opacity: .85; text-align: right; line-height: 1.5; }
+    #son-guncelleme { font-weight: 600; }
+
+    #filtre-alani {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    #filtre-alani label { font-size: .78rem; color: var(--yazi2); font-weight: 600; }
+    #filtre-alani select, #filtre-alani input {
+      border: 1px solid var(--kenar);
+      border-radius: 5px;
+      padding: 4px 8px;
+      font-size: .78rem;
+      background: var(--kart);
+      color: var(--yazi);
+      cursor: pointer;
+    }
+    #filtre-alani select:focus, #filtre-alani input:focus { outline: 2px solid var(--mavi-ac); }
+    .filtre-grup { display: flex; align-items: center; gap: 5px; }
+    #yukleme-durumu {
+      margin-left: auto;
+      font-size: .75rem;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .durum-yukleniyor { background: #E3F2FD; color: #1565C0; }
+    .durum-hazir      { background: #E8F5E9; color: #2E7D32; }
+    .durum-hata       { background: #FFEBEE; color: #C62828; }
+
+    #icerik {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto minmax(0, 2fr) minmax(0, 1.2fr);
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .panel {
+      background: var(--kart);
+      border: 1px solid var(--kenar);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .panel-baslik {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--yazi2);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .panel-baslik .rozet {
+      background: var(--mavi);
+      color: #fff;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: .65rem;
+    }
+
+    #e1 { grid-column: 1 / -1; }
+    #kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    .kpi-kart {
+      background: var(--arka);
+      border: 1px solid var(--kenar);
+      border-radius: 6px;
+      padding: 10px 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-kart::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      border-radius: 6px 0 0 6px;
+    }
+    .kpi-kart.mavi::before    { background: var(--mavi); }
+    .kpi-kart.yesil::before   { background: var(--yesil); }
+    .kpi-kart.kirmizi::before { background: var(--kirmizi); }
+    .kpi-kart.sari::before    { background: var(--sari); }
+    .kpi-kart.gri::before     { background: var(--gri); }
+
+    .kpi-etiket { font-size: .68rem; color: var(--yazi2); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+    .kpi-deger  { font-size: 1.45rem; font-weight: 700; line-height: 1.2; margin: 3px 0 2px; color: var(--yazi); }
+    .kpi-alt    { font-size: .7rem; color: var(--yazi2); }
+    .kpi-badge  {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: .68rem; font-weight: 700;
+      padding: 1px 6px; border-radius: 10px; margin-top: 3px;
+    }
+    .badge-iyi    { background: #E8F5E9; color: #2E7D32; }
+    .badge-kotu   { background: #FFEBEE; color: #C62828; }
+    .badge-normal { background: #FFF8E1; color: #F57F17; }
+
+    .grafik-sarici {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
+    canvas { width: 100% !important; }
+
+    #e4 { overflow: hidden; }
+    .tablo-sarici { flex: 1; overflow-y: auto; min-height: 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .73rem;
+    }
+    thead tr { background: var(--mavi); color: #fff; position: sticky; top: 0; z-index: 1; }
+    thead th { padding: 6px 8px; text-align: left; font-weight: 600; white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid var(--kenar); }
+    tbody tr:hover { background: #E3F2FD; }
+    tbody td { padding: 5px 8px; white-space: nowrap; }
+    .durum-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 10px; font-size: .65rem; font-weight: 700;
+    }
+    .pill-iyi    { background: #E8F5E9; color: #2E7D32; }
+    .pill-kotu   { background: #FFEBEE; color: #C62828; }
+    .pill-normal { background: #FFF8E1; color: #F57F17; }
+
+    .tablo-sarici::-webkit-scrollbar { width: 5px; }
+    .tablo-sarici::-webkit-scrollbar-track { background: transparent; }
+    .tablo-sarici::-webkit-scrollbar-thumb { background: var(--kenar); border-radius: 3px; }
+  </style>
 </head>
 <body>
 
-<div class="state-overlay" id="loadingOverlay">
-  <div class="spinner"></div>
-  <div class="state-msg">Veriler yükleniyor...</div>
-</div>
+<div id="uygulama">
 
-<div class="header">
-  <h1>VALEO Enerji Dashboard</h1>
-  <div class="meta">Son Güncelleme: <span id="lastUpdate">--</span></div>
-</div>
-
-<div class="filters">
-  <label>Hat:</label>
-  <select id="filterHat"><option value="Tümü">Tümü</option></select>
-  <label>Enerji Tipi:</label>
-  <select id="filterEnerji"><option value="Tümü">Tümü</option></select>
-  <label>Tarih Aralığı:</label>
-  <select id="filterTarih">
-    <option value="Tümü">Tümü</option>
-    <option value="7">Son 7 Gün</option>
-    <option value="14">Son 14 Gün</option>
-  </select>
-</div>
-
-<div class="main">
-  <div class="e1" id="kpiArea"></div>
-
-  <div class="card e2">
-    <div class="section-title"><span>E2</span> Günlük Birim Basina kWh Trendi</div>
-    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
-  </div>
-
-  <div class="card e3">
-    <div class="section-title"><span>E3</span> Hat Bazinda Tüketim Kirilimi</div>
-    <div class="chart-wrap"><canvas id="paretoChart"></canvas></div>
-  </div>
-
-  <div class="card e4">
-    <div class="section-title"><span>E4</span> Detay / Aksiyon Tablosu</div>
-    <div style="overflow:auto;max-height:180px" id="tableWrap">
-      <table>
-        <thead><tr><th>Tarih</th><th>Hat</th><th>Enerji Tipi</th><th>Tüketim (kWh)</th><th>Üretim Adedi</th><th>kWh/Birim</th><th>Hedef</th><th>Sapma %</th><th>CO2 (kg)</th><th>Durum</th></tr></thead>
-        <tbody id="detailBody"></tbody>
-      </table>
+  <div id="baslik-alani">
+    <div>
+      <h1>⚡ Enerji Tüketim Dashboard'u – VALEO</h1>
     </div>
+    <div class="meta">
+      <div>Son Güncelleme: <span id="son-guncelleme">—</span></div>
+      <div style="opacity:.7">S6 Enerji Senaryosu</div>
+    </div>
+  </div>
+
+  <div id="filtre-alani">
+    <div class="filtre-grup">
+      <label for="hat-filtre">Hat:</label>
+      <select id="hat-filtre"><option value="">Tümü</option></select>
+    </div>
+    <div class="filtre-grup">
+      <label for="tip-filtre">Enerji Tipi:</label>
+      <select id="tip-filtre"><option value="">Tümü</option></select>
+    </div>
+    <div class="filtre-grup">
+      <label>Başlangıç:</label>
+      <input type="date" id="baslangic-filtre" />
+    </div>
+    <div class="filtre-grup">
+      <label>–</label>
+      <input type="date" id="bitis-filtre" />
+    </div>
+    <div class="filtre-grup">
+      <label for="siralama">Sıralama:</label>
+      <select id="siralama">
+        <option value="tarih">Tarihe Göre</option>
+        <option value="sapma">Sapmaya Göre</option>
+        <option value="tuketim">Tüketime Göre</option>
+      </select>
+    </div>
+    <span id="yukleme-durumu" class="durum-yukleniyor">⏳ Yükleniyor…</span>
+  </div>
+
+  <div id="icerik">
+
+    <div class="panel" id="e1">
+      <div class="panel-baslik"><span class="rozet">E1</span> Özet / KPI</div>
+      <div id="kpi-grid">
+        <div class="kpi-kart mavi" id="kpi-toplam-tuketim">
+          <div class="kpi-etiket">Toplam Tüketim</div>
+          <div class="kpi-deger">—</div>
+          <div class="kpi-alt">kWh</div>
+        </div>
+        <div class="kpi-kart gri" id="kpi-toplam-uretim">
+          <div class="kpi-etiket">Toplam Üretim</div>
+          <div class="kpi-deger">—</div>
+          <div class="kpi-alt">Adet</div>
+        </div>
+        <div class="kpi-kart sari" id="kpi-birim-kwh">
+          <div class="kpi-etiket">Birim Başına kWh</div>
+          <div class="kpi-deger">—</div>
+          <div class="kpi-alt">kWh / Adet</div>
+        </div>
+        <div class="kpi-kart" id="kpi-hedef-sapma">
+          <div class="kpi-etiket">Hedef Sapma %</div>
+          <div class="kpi-deger">—</div>
+          <div class="kpi-alt">Hedefe göre fark</div>
+        </div>
+        <div class="kpi-kart gri" id="kpi-co2">
+          <div class="kpi-etiket">CO₂ Etkisi</div>
+          <div class="kpi-deger">—</div>
+          <div class="kpi-alt">ton CO₂</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="e2">
+      <div class="panel-baslik"><span class="rozet">E2</span> Trend – Hat Bazında Birim kWh (Zaman Serisi)</div>
+      <div class="grafik-sarici">
+        <canvas id="trend-grafik"></canvas>
+      </div>
+    </div>
+
+    <div class="panel" id="e3">
+      <div class="panel-baslik"><span class="rozet">E3</span> Kırılım – Hat & Enerji Tipi Bazında Tüketim</div>
+      <div class="grafik-sarici">
+        <canvas id="kirilim-grafik"></canvas>
+      </div>
+    </div>
+
+    <div class="panel" id="e4" style="grid-column: 1 / -1; grid-row: 3;">
+      <div class="panel-baslik"><span class="rozet">E4</span> Detay / Aksiyon Tablosu</div>
+      <div class="tablo-sarici">
+        <table id="detay-tablo">
+          <thead>
+            <tr>
+              <th>Tarih</th><th>Hat</th><th>Enerji Tipi</th>
+              <th>Tüketim (kWh)</th><th>Üretim (Adet)</th>
+              <th>Birim kWh</th><th>Hedef kWh/birim</th>
+              <th>Hedef Sapma %</th><th>CO₂ Faktörü</th>
+              <th>CO₂ (ton)</th><th>Durum</th>
+            </tr>
+          </thead>
+          <tbody id="detay-tbody">
+            <tr><td colspan="11" style="text-align:center;padding:20px;color:#90A4AE">Veri yükleniyor…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script>
-const SHEET_ID = '1xB9uTcdJtLHyOrefS36OJU-HOGvdKEZ0U9FneN-5FwQ';
-const SHEET_GID = '938135206';
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv&gid=' + SHEET_GID;
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/1xB9uTcdJtLHyOrefS36OJU-HOGvdKEZ0U9FneN-5FwQ/export?format=csv&gid=938135206';
 
-let rawData = [];
-let trendChart = null, paretoChart = null;
-
-function parseTR(s) {
-  if (!s) return 0;
-  return parseFloat(s.replace(/\./g, '').replace(',', '.'));
-}
-
-function formatTR(n, dec) {
-  if (dec === undefined) dec = 2;
-  const parts = n.toFixed(dec).split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  return parts.join(',');
-}
-
-function formatDate(iso) {
-  const p = iso.split('-');
-  return p[2] + '.' + p[1] + '.' + p[0];
-}
-
-async function fetchData() {
-  const res = await fetch(SHEET_URL);
-  if (!res.ok) throw new Error('Veri kaynagina ulasilamadi (HTTP ' + res.status + ')');
-  var rawText = await res.text();
-  var text = rawText.trim();
-  var lines = text.split('\n');
-  if (lines.length < 2) throw new Error('Veri bulunamadi');
-
-  var sep = lines[0].indexOf(';') >= 0 ? ';' : ',';
-
-  function splitCSV(line) {
-    var result = [], cur = '', inQuote = false;
-    for (var c = 0; c < line.length; c++) {
-      var ch = line[c];
-      if (ch === '"') { inQuote = !inQuote; continue; }
-      if (ch === sep && !inQuote) { result.push(cur.trim()); cur = ''; continue; }
-      cur += ch;
-    }
-    result.push(cur.trim());
-    return result;
+function parseNum(s) {
+  if (!s && s !== 0) return NaN;
+  var str = String(s).trim();
+  if (!str || str === '-') return NaN;
+  var hasPeriod = str.includes('.');
+  var hasComma  = str.includes(',');
+  if (hasPeriod && hasComma) {
+    return str.indexOf('.') < str.indexOf(',')
+      ? parseFloat(str.replace(/\./g, '').replace(',', '.'))
+      : parseFloat(str.replace(/,/g, ''));
   }
-
-  rawData = [];
-  var hatSet = new Set(), enerjiSet = new Set();
-
-  for (var i = 1; i < lines.length; i++) {
-    var cols = splitCSV(lines[i]);
-    if (cols.length < 7) continue;
-    var row = {
-      tarih: cols[0],
-      hat: cols[1],
-      enerjiTipi: cols[2],
-      tuketim: parseTR(cols[3]),
-      uretim: parseTR(cols[4]),
-      hedef: parseTR(cols[5]),
-      co2Faktor: parseTR(cols[6])
-    };
-    row.birimKwh = row.uretim > 0 ? row.tuketim / row.uretim : 0;
-    row.hedefSapma = row.hedef > 0 ? ((row.birimKwh - row.hedef) / row.hedef) * 100 : 0;
-    row.co2 = row.tuketim * row.co2Faktor;
-    rawData.push(row);
-    hatSet.add(row.hat);
-    enerjiSet.add(row.enerjiTipi);
+  if (hasComma && !hasPeriod) return parseFloat(str.replace(',', '.'));
+  if (hasPeriod && !hasComma) {
+    var parts = str.replace(/^-/, '').split('.');
+    if (parts.length === 2 && parts[1].length === 3 && parts[0] !== '0')
+      return parseFloat(str.replace(/\./g, ''));
+    return parseFloat(str);
   }
-
-  var hatSel = document.getElementById('filterHat');
-  hatSet.forEach(function(h) { var o = document.createElement('option'); o.value = h; o.textContent = h; hatSel.appendChild(o); });
-  var enerjiSel = document.getElementById('filterEnerji');
-  enerjiSet.forEach(function(e) { var o = document.createElement('option'); o.value = e; o.textContent = e; enerjiSel.appendChild(o); });
-
-  var dates = rawData.map(function(r) { return r.tarih; }).sort();
-  document.getElementById('lastUpdate').textContent = formatDate(dates[dates.length - 1]);
-
-  document.getElementById('loadingOverlay').style.display = 'none';
-  render();
+  return parseFloat(str);
 }
 
-function getFiltered() {
-  var hat = document.getElementById('filterHat').value;
-  var enerji = document.getElementById('filterEnerji').value;
-  var tarih = document.getElementById('filterTarih').value;
-
-  var data = rawData.slice();
-  if (hat !== 'Tümü') data = data.filter(function(r) { return r.hat === hat; });
-  if (enerji !== 'Tümü') data = data.filter(function(r) { return r.enerjiTipi === enerji; });
-  if (tarih !== 'Tümü') {
-    var allDates = [];
-    data.forEach(function(r) { if (allDates.indexOf(r.tarih) === -1) allDates.push(r.tarih); });
-    allDates.sort();
-    var last = allDates.slice(-parseInt(tarih));
-    data = data.filter(function(r) { return last.indexOf(r.tarih) >= 0; });
-  }
-  return data;
+function fmtSayi(n, decimal) {
+  if (decimal === undefined) decimal = 0;
+  if (isNaN(n) || n === null) return '—';
+  return n.toLocaleString('tr-TR', { minimumFractionDigits: decimal, maximumFractionDigits: decimal });
 }
 
-function render() {
-  var data = getFiltered();
-  renderKPI(data);
-  renderTrend(data);
-  renderPareto(data);
-  renderTable(data);
+function fmtTarih(d) {
+  if (!d) return '—';
+  if (d instanceof Date && !isNaN(d)) {
+    var g = String(d.getDate()).padStart(2,'0');
+    var a = String(d.getMonth()+1).padStart(2,'0');
+    return g + '.' + a + '.' + d.getFullYear();
+  }
+  return String(d);
 }
 
-function renderKPI(data) {
-  var area = document.getElementById('kpiArea');
-  if (data.length === 0) {
-    area.innerHTML = '<div class="kpi" style="grid-column:1/-1;padding:30px"><div class="label">UYARI</div><div style="color:#999;font-size:13px">Secilen filtrelere ait veri bulunamadi.</div></div>';
-    return;
-  }
+function parseTarih(s) {
+  if (!s) return null;
+  var m;
+  if ((m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/))) return new Date(+m[3], +m[2]-1, +m[1]);
+  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/)))        return new Date(+m[1], +m[2]-1, +m[3]);
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)))  return new Date(+m[3], +m[1]-1, +m[2]);
+  var d = new Date(s);
+  return isNaN(d) ? null : d;
+}
 
-  var totalTuketim = 0, totalUretim = 0, totalHedef = 0, totalCO2 = 0;
-  data.forEach(function(r) {
-    totalTuketim += r.tuketim;
-    totalUretim += r.uretim;
-    totalHedef += r.hedef;
-    totalCO2 += r.co2;
+function durumHesapla(sapma) {
+  if (isNaN(sapma)) return { etiket: '—', sinif: '' };
+  if (sapma <= 0)   return { etiket: '▼ Hedef Altı', sinif: 'iyi' };
+  if (sapma <= 5)   return { etiket: '▶ Sınırda',    sinif: 'normal' };
+  return              { etiket: '▲ Hedef Üstü',   sinif: 'kotu' };
+}
+
+function csvSatirParse(satir, ayrac) {
+  var sonuc = [];
+  var alan = '', tirnak = false;
+  for (var i = 0; i < satir.length; i++) {
+    var c = satir[i];
+    if (c === '"') { tirnak = !tirnak; continue; }
+    if (c === ayrac && !tirnak) { sonuc.push(alan.trim()); alan = ''; continue; }
+    alan += c;
+  }
+  sonuc.push(alan.trim());
+  return sonuc;
+}
+
+function ayracTespit(ilkSatir) {
+  var sc = (ilkSatir.match(/;/g) || []).length;
+  var vc = (ilkSatir.match(/,/g) || []).length;
+  return sc >= vc ? ';' : ',';
+}
+
+function csvParse(metin) {
+  var satirlar = metin.split(/\r?\n/).filter(function(s) { return s.trim(); });
+  if (satirlar.length < 2) return [];
+  var ayrac = ayracTespit(satirlar[0]);
+  var basliklar = csvSatirParse(satirlar[0], ayrac).map(function(b) { return b.toLowerCase().trim(); });
+  return satirlar.slice(1).map(function(s) {
+    var degerler = csvSatirParse(s, ayrac);
+    var obj = {};
+    basliklar.forEach(function(b, i) { obj[b] = degerler[i] || ''; });
+    return obj;
   });
-  var avgBirimKwh = totalUretim > 0 ? totalTuketim / totalUretim : 0;
-  var avgHedef = totalHedef / data.length;
-  var avgSapma = avgHedef > 0 ? ((avgBirimKwh - avgHedef) / avgHedef) * 100 : 0;
-  var uniqueDays = [];
-  data.forEach(function(r) { if (uniqueDays.indexOf(r.tarih) === -1) uniqueDays.push(r.tarih); });
-
-  var sapmaClass = avgSapma > 5 ? 'up' : avgSapma < -2 ? 'down' : 'neutral';
-  var sapmaBadge = avgSapma > 5 ? 'badge-red' : avgSapma < -2 ? 'badge-green' : 'badge-blue';
-  var sapmaLabel = avgSapma > 5 ? 'Hedef Ustu' : avgSapma < -2 ? 'Hedef Alti' : 'Hedefte';
-  var sapmaArrow = avgSapma > 5 ? '▲' : avgSapma < -2 ? '▼' : '●';
-
-  area.innerHTML =
-    '<div class="kpi"><div class="icon">⚡</div><div class="label">TOPLAM TUKETIM</div><div class="value">' + formatTR(totalTuketim, 0) + ' kWh</div><div class="sub neutral">' + uniqueDays.length + ' gun</div></div>' +
-    '<div class="kpi"><div class="icon">�icing</div><div class="label">TOPLAM URETIM</div><div class="value">' + formatTR(totalUretim, 0) + ' adet</div></div>' +
-    '<div class="kpi"><div class="icon">📐</div><div class="label">BIRIM BASINA kWh</div><div class="value">' + formatTR(avgBirimKwh, 2) + '</div><div class="sub neutral">Ort. Hedef: ' + formatTR(avgHedef, 2) + '</div></div>' +
-    '<div class="kpi"><div class="icon">' + sapmaArrow + '</div><div class="label">HEDEF SAPMA</div><div class="value ' + sapmaClass + '">' + (avgSapma >= 0 ? '+' : '') + formatTR(avgSapma, 1) + '%</div><div class="badge ' + sapmaBadge + '">' + sapmaLabel + '</div></div>' +
-    '<div class="kpi"><div class="icon">🌿</div><div class="label">TOPLAM CO2</div><div class="value">' + formatTR(totalCO2 / 1000, 1) + ' ton</div><div class="sub neutral">' + formatTR(totalCO2 / totalUretim, 3) + ' kg/birim</div></div>';
 }
 
-function renderTrend(data) {
-  var ctx = document.getElementById('trendChart');
-  if (trendChart) trendChart.destroy();
+function kolonBul(basliklar, adaylar) {
+  for (var a = 0; a < adaylar.length; a++) {
+    var b = basliklar.find(function(x) { return x.includes(adaylar[a].toLowerCase()); });
+    if (b) return b;
+  }
+  return null;
+}
 
-  var dateSet = [], hatSet = [];
-  data.forEach(function(r) {
-    if (dateSet.indexOf(r.tarih) === -1) dateSet.push(r.tarih);
-    if (hatSet.indexOf(r.hat) === -1) hatSet.push(r.hat);
-  });
-  dateSet.sort(); hatSet.sort();
+var trendGrafik   = null;
+var kirilimGrafik = null;
+var tumVeri = [];
+var kolonlar = {};
 
-  var colors = { 'Hat-1': '#1565c0', 'Hat-2': '#6a1b9a', 'Hat-3': '#00838f' };
-  var datasets = hatSet.map(function(hat) {
+function veriIsle(satirlar) {
+  if (!satirlar.length) return [];
+  var basliklar = Object.keys(satirlar[0]);
+  kolonlar = {
+    tarih      : kolonBul(basliklar, ['tarih','date']),
+    hat        : kolonBul(basliklar, ['hat']),
+    enerjitipi : kolonBul(basliklar, ['enerji tipi','enerjitipi','tip','type']),
+    tuketim    : kolonBul(basliklar, ['tüketim (kwh)','tuketim (kwh)','tüketim','tuketim','kwh']),
+    uretim     : kolonBul(basliklar, ['üretim adedi','uretim adedi','üretim','uretim','adet']),
+    hedef      : kolonBul(basliklar, ['hedef kwh/birim','hedef kwh','hedef']),
+    co2faktor  : kolonBul(basliklar, ['co2 faktörü','co2 faktoru','co2']),
+  };
+  return satirlar.map(function(s) {
+    var tuketim    = parseNum(s[kolonlar.tuketim]);
+    var uretim     = parseNum(s[kolonlar.uretim]);
+    var hedef      = parseNum(s[kolonlar.hedef]);
+    var co2f       = parseNum(s[kolonlar.co2faktor]) || 0.415;
+    var enerjiTipi = (s[kolonlar.enerjitipi] || '').trim();
+    var birimKwh   = (uretim > 0) ? tuketim / uretim : NaN;
+    var sapma      = (!isNaN(birimKwh) && hedef > 0) ? (birimKwh - hedef) / hedef * 100 : NaN;
+    var co2        = !isNaN(tuketim) ? tuketim * co2f / 1000 : NaN;
     return {
-      label: hat,
-      data: dateSet.map(function(d) {
-        var rows = data.filter(function(r) { return r.tarih === d && r.hat === hat; });
+      tarihHam: s[kolonlar.tarih] || '',
+      tarih   : parseTarih(s[kolonlar.tarih]),
+      hat     : (s[kolonlar.hat] || 'Bilinmeyen').trim(),
+      enerjiTipi: enerjiTipi, tuketim: tuketim, uretim: uretim, hedef: hedef,
+      co2f: co2f, birimKwh: birimKwh, sapma: sapma, co2: co2,
+    };
+  }).filter(function(r) { return r.tarih && !isNaN(r.tuketim); });
+}
+
+function filtreliVeri() {
+  var hat  = document.getElementById('hat-filtre').value;
+  var tip  = document.getElementById('tip-filtre').value;
+  var bas  = document.getElementById('baslangic-filtre').value;
+  var bit  = document.getElementById('bitis-filtre').value;
+  var sira = document.getElementById('siralama').value;
+  var veri = tumVeri.slice();
+  if (hat)  veri = veri.filter(function(r) { return r.hat === hat; });
+  if (tip)  veri = veri.filter(function(r) { return r.enerjiTipi === tip; });
+  if (bas)  { var d = new Date(bas); veri = veri.filter(function(r) { return r.tarih >= d; }); }
+  if (bit)  { var d2 = new Date(bit); d2.setHours(23,59,59); veri = veri.filter(function(r) { return r.tarih <= d2; }); }
+  if (sira === 'tarih')   veri.sort(function(a,b) { return a.tarih - b.tarih; });
+  if (sira === 'sapma')   veri.sort(function(a,b) { return b.sapma - a.sapma; });
+  if (sira === 'tuketim') veri.sort(function(a,b) { return b.tuketim - a.tuketim; });
+  return veri;
+}
+
+function uretimTekillesir(rows) {
+  var map = {};
+  rows.forEach(function(r) {
+    var k = r.hat + '||' + (r.tarih ? r.tarih.getTime() : r.tarihHam);
+    if (!(k in map)) map[k] = r.uretim || 0;
+  });
+  return Object.values(map).reduce(function(t, v) { return t + v; }, 0);
+}
+
+function kpiGuncelle(veri) {
+  var topTuketim = veri.reduce(function(t, r) { return t + (r.tuketim || 0); }, 0);
+  var topCo2     = veri.reduce(function(t, r) { return t + (r.co2     || 0); }, 0);
+  var topUretim  = uretimTekillesir(veri);
+  var birimKwh   = topUretim > 0 ? topTuketim / topUretim : NaN;
+
+  var tipler = [];
+  veri.forEach(function(r) { if (r.enerjiTipi && tipler.indexOf(r.enerjiTipi) === -1) tipler.push(r.enerjiTipi); });
+  var ortSapma = NaN;
+  if (tipler.length > 0) {
+    var tipSonuclari = tipler.map(function(tip) {
+      var rows = veri.filter(function(r) { return r.enerjiTipi === tip; });
+      var tipTuketim  = rows.reduce(function(t, r) { return t + (r.tuketim || 0); }, 0);
+      var tipUretim   = uretimTekillesir(rows);
+      var tipBirimKwh = tipUretim > 0 ? tipTuketim / tipUretim : NaN;
+      var gecerli = rows.filter(function(r) { return r.hedef > 0 && r.uretim > 0; });
+      var hedefAdet = gecerli.reduce(function(t, r) { return t + r.hedef * r.uretim; }, 0);
+      var uretimGecerli = gecerli.reduce(function(t, r) { return t + r.uretim; }, 0);
+      var ortHedef = uretimGecerli > 0 ? hedefAdet / uretimGecerli : NaN;
+      var sapma = (!isNaN(tipBirimKwh) && ortHedef > 0)
+        ? (tipBirimKwh - ortHedef) / ortHedef * 100 : NaN;
+      return { sapma: sapma, tuketim: tipTuketim };
+    }).filter(function(x) { return !isNaN(x.sapma); });
+
+    if (tipSonuclari.length > 0) {
+      var topTip = tipSonuclari.reduce(function(t, x) { return t + x.tuketim; }, 0);
+      ortSapma = topTip > 0
+        ? tipSonuclari.reduce(function(t, x) { return t + x.sapma * x.tuketim / topTip; }, 0)
+        : tipSonuclari.reduce(function(t, x) { return t + x.sapma; }, 0) / tipSonuclari.length;
+    }
+  }
+
+  setKpi('kpi-toplam-tuketim', fmtSayi(topTuketim, 0) + ' kWh', '', '');
+  setKpi('kpi-toplam-uretim',  fmtSayi(topUretim,  0) + ' Adet', '', '');
+  setKpi('kpi-birim-kwh',      fmtSayi(birimKwh, 2) + ' kWh/Adet', '', '');
+
+  var sapmaKart = document.getElementById('kpi-hedef-sapma');
+  sapmaKart.classList.remove('mavi','yesil','kirmizi','sari');
+  if (!isNaN(ortSapma)) {
+    var poz = ortSapma > 0;
+    sapmaKart.classList.add(poz ? 'kirmizi' : 'yesil');
+    var isaretli = (poz ? '+' : '') + fmtSayi(ortSapma, 1) + ' %';
+    setKpi('kpi-hedef-sapma', isaretli, poz ? 'Hedef aşılıyor' : 'Hedefin altında', poz ? 'kotu' : 'iyi');
+  } else {
+    setKpi('kpi-hedef-sapma', '—', 'Hedef bilgisi yok', '');
+  }
+  setKpi('kpi-co2', fmtSayi(topCo2, 2) + ' ton', 'CO₂ eşdeğeri', '');
+}
+
+function setKpi(id, deger, alt, badge) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.querySelector('.kpi-deger').textContent = deger;
+  if (alt !== undefined) el.querySelector('.kpi-alt').textContent = alt;
+  var badgeEl = el.querySelector('.kpi-badge');
+  if (badge) {
+    if (!badgeEl) { badgeEl = document.createElement('div'); badgeEl.className = 'kpi-badge'; el.appendChild(badgeEl); }
+    badgeEl.className = 'kpi-badge badge-' + badge;
+  } else if (badgeEl) {
+    badgeEl.remove();
+  }
+}
+
+function trendGrafiginiGuncelle(veri) {
+  var hatlar = [];
+  veri.forEach(function(r) { if (hatlar.indexOf(r.hat) === -1) hatlar.push(r.hat); });
+  hatlar.sort();
+
+  var tarihSet = [];
+  veri.forEach(function(r) {
+    var k = fmtTarih(r.tarih);
+    if (tarihSet.indexOf(k) === -1) tarihSet.push(k);
+  });
+  tarihSet.sort(function(a, b) { return parseTarih(a) - parseTarih(b); });
+
+  var renkler = { 'Hat-1': '#1565C0', 'Hat-2': '#6A1B9A', 'Hat-3': '#00838F' };
+  var datasets = hatlar.map(function(hat) {
+    return {
+      label: hat + ' (kWh/Adet)',
+      data: tarihSet.map(function(k) {
+        var rows = veri.filter(function(r) { return fmtTarih(r.tarih) === k && r.hat === hat; });
         if (rows.length === 0) return null;
-        var t = 0; rows.forEach(function(r) { t += r.tuketim; });
+        var t = rows.reduce(function(s, r) { return s + r.tuketim; }, 0);
         var u = rows[0].uretim;
         return u > 0 ? +(t / u).toFixed(3) : null;
       }),
-      borderColor: colors[hat] || '#888',
+      borderColor: renkler[hat] || '#888',
       backgroundColor: 'transparent',
       borderWidth: 2,
-      pointRadius: 1.5,
-      tension: 0.3
+      pointRadius: 2.5,
+      tension: 0.3,
+      fill: false,
     };
   });
 
   datasets.push({
     label: 'Hedef (ort.)',
-    data: dateSet.map(function(d) {
-      var rows = data.filter(function(r) { return r.tarih === d; });
+    data: tarihSet.map(function(k) {
+      var rows = veri.filter(function(r) { return fmtTarih(r.tarih) === k; });
       if (rows.length === 0) return null;
       var s = 0; rows.forEach(function(r) { s += r.hedef; });
-      return s / rows.length;
+      return +(s / rows.length).toFixed(3);
     }),
-    borderColor: '#bdbdbd',
-    borderDash: [5, 3],
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    pointRadius: 0
+    borderColor: '#F9A825',
+    borderWidth: 2,
+    borderDash: [5, 4],
+    pointRadius: 0,
+    tension: 0,
+    fill: false,
   });
 
-  trendChart = new Chart(ctx, {
+  var ctx = document.getElementById('trend-grafik').getContext('2d');
+  if (trendGrafik) trendGrafik.destroy();
+  trendGrafik = new Chart(ctx, {
     type: 'line',
-    data: { labels: dateSet.map(formatDate), datasets: datasets },
+    data: { labels: tarihSet, datasets: datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 14 } },
+        tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + fmtSayi(ctx.parsed.y, 3); } } }
+      },
       scales: {
-        x: { ticks: { font: { size: 10 }, maxRotation: 45 } },
-        y: { title: { display: true, text: 'kWh / Birim', font: { size: 11 } }, ticks: { font: { size: 10 } } }
+        x: { ticks: { font: { size: 10 }, maxTicksLimit: 10 }, grid: { color: '#eceff1' } },
+        y: { ticks: { font: { size: 10 } }, grid: { color: '#eceff1' },
+             title: { display: true, text: 'kWh / Adet', font: { size: 10 } } }
       }
     }
   });
 }
 
-function renderPareto(data) {
-  var ctx = document.getElementById('paretoChart');
-  if (paretoChart) paretoChart.destroy();
+function kirilimGrafiginiGuncelle(veri) {
+  var hatlar = [];
+  veri.forEach(function(r) { if (hatlar.indexOf(r.hat) === -1) hatlar.push(r.hat); });
+  hatlar.sort();
 
-  var hatSet = [], enerjiSet = [];
-  data.forEach(function(r) {
-    if (hatSet.indexOf(r.hat) === -1) hatSet.push(r.hat);
-    if (enerjiSet.indexOf(r.enerjiTipi) === -1) enerjiSet.push(r.enerjiTipi);
-  });
-  hatSet.sort(); enerjiSet.sort();
+  var tipler = [];
+  veri.forEach(function(r) { if (r.enerjiTipi && tipler.indexOf(r.enerjiTipi) === -1) tipler.push(r.enerjiTipi); });
+  tipler.sort();
 
-  var bgColors = { 'Elektrik': '#1565c0', 'Dogalgaz': '#78909c', 'Doğalgaz': '#78909c' };
-  var datasets = enerjiSet.map(function(tip) {
+  var tipRenk = { 'Elektrik': '#1E88E5', 'Doğalgaz': '#78909C', 'Dogalgaz': '#78909C' };
+
+  var datasets = tipler.map(function(tip) {
     return {
-      label: tip,
-      data: hatSet.map(function(hat) {
-        var s = 0;
-        data.forEach(function(r) { if (r.hat === hat && r.enerjiTipi === tip) s += r.tuketim; });
-        return s;
+      type: 'bar',
+      label: tip + ' (kWh)',
+      data: hatlar.map(function(hat) {
+        return veri.filter(function(r) { return r.hat === hat && r.enerjiTipi === tip; })
+          .reduce(function(s, r) { return s + (r.tuketim || 0); }, 0);
       }),
-      backgroundColor: bgColors[tip] || '#aaa',
-      borderRadius: 4
+      backgroundColor: tipRenk[tip] || '#aaa',
+      borderRadius: 4,
+      yAxisID: 'y',
+      order: 2,
     };
   });
 
-  paretoChart = new Chart(ctx, {
-    type: 'bar',
-    data: { labels: hatSet, datasets: datasets },
+  var toplamPerHat = hatlar.map(function(hat) {
+    return veri.filter(function(r) { return r.hat === hat; })
+      .reduce(function(s, r) { return s + (r.tuketim || 0); }, 0);
+  });
+  var genelToplam = toplamPerHat.reduce(function(s, v) { return s + v; }, 0);
+  var kum = 0;
+  var kumYuzde = toplamPerHat.map(function(v) { kum += v; return genelToplam > 0 ? +(kum / genelToplam * 100).toFixed(1) : 0; });
+
+  datasets.push({
+    type: 'line',
+    label: 'Kümülatif %',
+    data: kumYuzde,
+    borderColor: '#C62828',
+    borderWidth: 2,
+    pointRadius: 3,
+    yAxisID: 'y2',
+    order: 1,
+    fill: false,
+  });
+
+  var ctx = document.getElementById('kirilim-grafik').getContext('2d');
+  if (kirilimGrafik) kirilimGrafik.destroy();
+  kirilimGrafik = new Chart(ctx, {
+    data: { labels: hatlar, datasets: datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 14 } },
+        tooltip: { callbacks: {
+          label: function(ctx) {
+            return ctx.dataset.label.includes('%')
+              ? ctx.dataset.label + ': %' + fmtSayi(ctx.parsed.y, 1)
+              : ctx.dataset.label + ': ' + fmtSayi(ctx.parsed.y, 0) + ' kWh';
+          }
+        }}
+      },
       scales: {
-        x: { ticks: { font: { size: 11 } } },
-        y: { title: { display: true, text: 'Toplam Tuketim (kWh)', font: { size: 11 } }, ticks: { font: { size: 10 }, callback: function(v) { return formatTR(v, 0); } } }
+        x: { ticks: { font: { size: 10 } }, grid: { color: '#eceff1' } },
+        y: { ticks: { font: { size: 10 } }, grid: { color: '#eceff1' },
+             title: { display: true, text: 'kWh', font: { size: 10 } } },
+        y2: { position: 'right', min: 0, max: 100,
+              ticks: { font: { size: 10 }, callback: function(v) { return '%' + v; } },
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: 'Kümülatif %', font: { size: 10 } } }
       }
     }
   });
 }
 
-function renderTable(data) {
-  var body = document.getElementById('detailBody');
-  if (data.length === 0) {
-    body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;color:#999">Secilen filtrelere ait veri bulunamadi.</td></tr>';
+function tabloGuncelle(veri) {
+  var tbody = document.getElementById('detay-tbody');
+  if (!veri.length) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:20px;color:#90A4AE">' +
+      '📋 Gösterilecek kayıt bulunamadı. Filtre ayarlarını kontrol edin.</td></tr>';
     return;
   }
-
-  var sorted = data.slice().sort(function(a, b) { return b.hedefSapma - a.hedefSapma; });
-  var html = '';
-  sorted.forEach(function(r) {
-    var dotClass = 'dot-green', statusText = 'Hedefte';
-    if (r.hedefSapma > 10) { dotClass = 'dot-red'; statusText = 'Kritik'; }
-    else if (r.hedefSapma > 5) { dotClass = 'dot-yellow'; statusText = 'Uyari'; }
-    else if (r.hedefSapma < -5) { dotClass = 'dot-green'; statusText = 'Iyi'; }
-    var sapClass = r.hedefSapma > 5 ? 'up' : r.hedefSapma < -2 ? 'down' : 'neutral';
-    html += '<tr>' +
-      '<td>' + formatDate(r.tarih) + '</td>' +
-      '<td>' + r.hat + '</td>' +
-      '<td>' + r.enerjiTipi + '</td>' +
-      '<td style="text-align:right">' + formatTR(r.tuketim, 1) + '</td>' +
-      '<td style="text-align:right">' + formatTR(r.uretim, 0) + '</td>' +
-      '<td style="text-align:right">' + formatTR(r.birimKwh, 3) + '</td>' +
-      '<td style="text-align:right">' + formatTR(r.hedef, 2) + '</td>' +
-      '<td style="text-align:right;font-weight:600" class="' + sapClass + '">' + (r.hedefSapma >= 0 ? '+' : '') + formatTR(r.hedefSapma, 1) + '%</td>' +
-      '<td style="text-align:right">' + formatTR(r.co2, 1) + '</td>' +
-      '<td><span class="status-dot ' + dotClass + '"></span>' + statusText + '</td>' +
+  tbody.innerHTML = veri.map(function(r) {
+    var durum = durumHesapla(r.sapma);
+    var sapmaStr = !isNaN(r.sapma) ? (r.sapma > 0 ? '+' : '') + fmtSayi(r.sapma, 1) + ' %' : '—';
+    var renk = durum.sinif ? 'pill-' + durum.sinif : '';
+    return '<tr>' +
+      '<td>' + fmtTarih(r.tarih) + '</td><td>' + r.hat + '</td><td>' + (r.enerjiTipi || '—') + '</td>' +
+      '<td>' + fmtSayi(r.tuketim, 0) + '</td><td>' + fmtSayi(r.uretim, 0) + '</td>' +
+      '<td>' + fmtSayi(r.birimKwh, 3) + '</td><td>' + fmtSayi(r.hedef, 3) + '</td>' +
+      '<td style="font-weight:600;color:' + (r.sapma>5?'#C62828':r.sapma<=0?'#2E7D32':'#F57F17') + '">' + sapmaStr + '</td>' +
+      '<td>' + fmtSayi(r.co2f, 3) + '</td><td>' + fmtSayi(r.co2, 3) + '</td>' +
+      '<td><span class="durum-pill ' + renk + '">' + (durum.etiket || '—') + '</span></td>' +
       '</tr>';
-  });
-  body.innerHTML = html;
+  }).join('');
 }
 
-document.getElementById('filterHat').addEventListener('change', render);
-document.getElementById('filterEnerji').addEventListener('change', render);
-document.getElementById('filterTarih').addEventListener('change', render);
+function filtreDoldur() {
+  var hatlar = [];
+  tumVeri.forEach(function(r) { if (hatlar.indexOf(r.hat) === -1) hatlar.push(r.hat); });
+  hatlar.sort();
+  document.getElementById('hat-filtre').innerHTML = '<option value="">Tümü</option>' +
+    hatlar.map(function(h) { return '<option value="' + h + '">' + h + '</option>'; }).join('');
 
-fetchData().catch(function(err) {
-  document.getElementById('loadingOverlay').innerHTML = '<div class="error-msg">Hata: ' + err.message + '</div><div class="state-msg" style="margin-top:8px">Lutfen internet baglantinizi kontrol edin ve sayfayi yenileyin.</div>';
-});
+  var tipler = [];
+  tumVeri.forEach(function(r) { if (r.enerjiTipi && tipler.indexOf(r.enerjiTipi) === -1) tipler.push(r.enerjiTipi); });
+  tipler.sort();
+  document.getElementById('tip-filtre').innerHTML = '<option value="">Tümü</option>' +
+    tipler.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
+
+  if (tumVeri.length) {
+    var tarihler = tumVeri.map(function(r) { return r.tarih; }).filter(Boolean).sort(function(a,b) { return a-b; });
+    if (tarihler[0]) document.getElementById('baslangic-filtre').value = tarihler[0].toISOString().slice(0,10);
+    if (tarihler[tarihler.length-1]) document.getElementById('bitis-filtre').value = tarihler[tarihler.length-1].toISOString().slice(0,10);
+  }
+}
+
+function panelleriGuncelle() {
+  var veri = filtreliVeri();
+  kpiGuncelle(veri);
+  trendGrafiginiGuncelle(veri);
+  kirilimGrafiginiGuncelle(veri);
+  tabloGuncelle(veri);
+}
+
+async function veriYukle() {
+  var durumEl = document.getElementById('yukleme-durumu');
+  durumEl.textContent = '⏳ Yükleniyor…';
+  durumEl.className   = 'durum-yukleniyor';
+  try {
+    var yanit = await fetch(CSV_URL);
+    if (!yanit.ok) throw new Error('HTTP ' + yanit.status);
+    var metin = await yanit.text();
+    var satirlar = csvParse(metin);
+    if (!satirlar.length) throw new Error('Veri boş');
+    tumVeri = veriIsle(satirlar);
+    if (!tumVeri.length) throw new Error('İşlenebilir satır bulunamadı');
+    filtreDoldur();
+    panelleriGuncelle();
+    var simdi = new Date();
+    document.getElementById('son-guncelleme').textContent =
+      fmtTarih(simdi) + ' ' + simdi.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    durumEl.textContent = '✓ ' + tumVeri.length + ' kayıt yüklendi';
+    durumEl.className   = 'durum-hazir';
+  } catch (hata) {
+    console.error('Veri yükleme hatası:', hata);
+    durumEl.textContent = '✕ Veri yüklenemedi';
+    durumEl.className   = 'durum-hata';
+    document.getElementById('detay-tbody').innerHTML =
+      '<tr><td colspan="11" style="text-align:center;padding:30px">' +
+        '<div style="color:#C62828;font-weight:600;font-size:.9rem">⚠️ Veri kaynağına ulaşılamadı</div>' +
+        '<div style="color:#90A4AE;margin-top:6px;font-size:.78rem">' +
+          'Hata: ' + hata.message + '<br>' +
+          'Google Sheets dokümanının "Bağlantıya sahip herkes" ile paylaşıldığından emin olun.' +
+        '</div>' +
+      '</td></tr>';
+    ['kpi-toplam-tuketim','kpi-toplam-uretim','kpi-birim-kwh','kpi-hedef-sapma','kpi-co2']
+      .forEach(function(id) { var el = document.getElementById(id); if (el) el.querySelector('.kpi-deger').textContent = '—'; });
+  }
+}
+
+document.getElementById('hat-filtre').addEventListener('change',       panelleriGuncelle);
+document.getElementById('tip-filtre').addEventListener('change',       panelleriGuncelle);
+document.getElementById('baslangic-filtre').addEventListener('change', panelleriGuncelle);
+document.getElementById('bitis-filtre').addEventListener('change',     panelleriGuncelle);
+document.getElementById('siralama').addEventListener('change',         panelleriGuncelle);
+
+veriYukle();
+setInterval(veriYukle, 5 * 60 * 1000);
 </script>
 </body>
 </html>
