@@ -101,7 +101,9 @@ tr:hover td{background:#f8f9ff}
 </div>
 
 <script>
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1xB9uTcdJtLHyOrefS36OJU-HOGvdKEZ0U9FneN-5FwQ/export?format=csv&gid=938135206';
+const SHEET_ID = '1xB9uTcdJtLHyOrefS36OJU-HOGvdKEZ0U9FneN-5FwQ';
+const SHEET_GID = '938135206';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv&gid=' + SHEET_GID;
 
 let rawData = [];
 let trendChart = null, paretoChart = null;
@@ -126,20 +128,35 @@ function formatDate(iso) {
 async function fetchData() {
   const res = await fetch(SHEET_URL);
   if (!res.ok) throw new Error('Veri kaynagina ulasilamadi (HTTP ' + res.status + ')');
-  const text = await res.text();
-  const lines = text.trim().split('\n');
+  var rawText = await res.text();
+  var text = rawText.trim();
+  var lines = text.split('\n');
   if (lines.length < 2) throw new Error('Veri bulunamadi');
+
+  var sep = lines[0].indexOf(';') >= 0 ? ';' : ',';
+
+  function splitCSV(line) {
+    var result = [], cur = '', inQuote = false;
+    for (var c = 0; c < line.length; c++) {
+      var ch = line[c];
+      if (ch === '"') { inQuote = !inQuote; continue; }
+      if (ch === sep && !inQuote) { result.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    result.push(cur.trim());
+    return result;
+  }
 
   rawData = [];
   var hatSet = new Set(), enerjiSet = new Set();
 
   for (var i = 1; i < lines.length; i++) {
-    var cols = lines[i].split(';');
+    var cols = splitCSV(lines[i]);
     if (cols.length < 7) continue;
     var row = {
-      tarih: cols[0].trim(),
-      hat: cols[1].trim(),
-      enerjiTipi: cols[2].trim(),
+      tarih: cols[0],
+      hat: cols[1],
+      enerjiTipi: cols[2],
       tuketim: parseTR(cols[3]),
       uretim: parseTR(cols[4]),
       hedef: parseTR(cols[5]),
