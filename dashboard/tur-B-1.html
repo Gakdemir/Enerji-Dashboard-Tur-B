@@ -344,8 +344,24 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/1xB9uTcdJtLHyOrefS36OJU-
    ═══════════════════════════════════════════════════════ */
 function parseNum(s) {
   if (!s && s !== 0) return NaN;
-  // Türkçe format: "1.234,56" → 1234.56
-  return parseFloat(String(s).replace(/\./g, '').replace(',', '.'));
+  const str = String(s).trim();
+  if (!str || str === '-') return NaN;
+  const hasPeriod = str.includes('.');
+  const hasComma  = str.includes(',');
+  if (hasPeriod && hasComma) {
+    return str.indexOf('.') < str.indexOf(',')
+      ? parseFloat(str.replace(/\./g, '').replace(',', '.'))  // "1.234,56" TR
+      : parseFloat(str.replace(/,/g, ''));                     // "1,234.56" EN
+  }
+  if (hasComma && !hasPeriod) return parseFloat(str.replace(',', '.'));  // "2,60"
+  if (hasPeriod && !hasComma) {
+    const parts = str.replace(/^-/, '').split('.');
+    // "1.051" → 3 hane sonra, başı 0 değil → TR binlik ayraç → 1051
+    if (parts.length === 2 && parts[1].length === 3 && parts[0] !== '0')
+      return parseFloat(str.replace(/\./g, ''));
+    return parseFloat(str); // "0.454" veya "2.60"
+  }
+  return parseFloat(str);
 }
 
 function fmtSayi(n, decimal = 0) {
@@ -520,9 +536,14 @@ function kpiGuncelle(veri) {
   const topCo2     = veri.reduce((t, r) => t + (r.co2     || 0), 0);
   const birimKwh   = topUretim > 0 ? topTuketim / topUretim : NaN;
 
-  // Ağırlıklı ortalama hedef sapma
-  const gecerli = veri.filter(r => !isNaN(r.sapma));
-  const ortSapma = gecerli.length ? gecerli.reduce((t,r) => t + r.sapma, 0) / gecerli.length : NaN;
+  // Sapma: toplam birimKwh vs üretim-ağırlıklı ortalama hedef
+  const gecerli = veri.filter(r => !isNaN(r.hedef) && r.hedef > 0 && r.uretim > 0);
+  const topHedefAdet = gecerli.reduce((t, r) => t + r.hedef * r.uretim, 0);
+  const topUretimGecerli = gecerli.reduce((t, r) => t + r.uretim, 0);
+  const ortHedef = topUretimGecerli > 0 ? topHedefAdet / topUretimGecerli : NaN;
+  const ortSapma = (!isNaN(birimKwh) && !isNaN(ortHedef) && ortHedef > 0)
+    ? (birimKwh - ortHedef) / ortHedef * 100
+    : NaN;
 
   // KPI kartları
   setKpi('kpi-toplam-tuketim', fmtSayi(topTuketim, 0) + ' kWh', '', '');
