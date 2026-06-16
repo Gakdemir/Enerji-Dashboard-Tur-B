@@ -3,345 +3,363 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VALEO Enerji Dashboard — S6</title>
+<title>VALEO Enerji Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--blue:#2563eb;--blue-light:#dbeafe;--gray:#6b7280;--gray-light:#f3f4f6;--green:#16a34a;--red:#dc2626;--orange:#ea580c;--bg:#f8fafc;--card:#fff;--text:#1e293b;--border:#e2e8f0}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
-header{background:#fff;border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-header h1{font-size:18px;font-weight:700;color:var(--blue)}
-header .meta{font-size:12px;color:var(--gray)}
-.filters{background:#fff;border-bottom:1px solid var(--border);padding:8px 24px;display:flex;gap:12px;align-items:center;flex-shrink:0}
-.filters label{font-size:12px;font-weight:600;color:var(--gray)}
-.filters select{padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px}
-.tabs{display:flex;gap:0;background:#fff;border-bottom:2px solid var(--border);padding:0 24px;flex-shrink:0}
-.tab{padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;color:var(--gray);transition:.2s}
-.tab:hover{color:var(--blue)}
-.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
-main{flex:1;overflow:hidden;padding:16px 24px}
-.screen{display:none;height:100%}
-.screen.active{display:flex;flex-direction:column;height:100%}
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;flex-shrink:0}
-.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
-.kpi .label{font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:4px}
-.kpi .value{font-size:26px;font-weight:700;color:var(--text)}
-.kpi .sub{font-size:11px;margin-top:2px}
-.kpi .sub.positive{color:var(--green)}
-.kpi .sub.negative{color:var(--red)}
-.kpi .sub.neutral{color:var(--gray)}
-.chart-area{flex:1;min-height:0;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative}
-.chart-area canvas{width:100%!important;height:100%!important}
-.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-height:0}
-table.action{width:100%;border-collapse:collapse;font-size:13px}
-table.action th{background:var(--blue);color:#fff;padding:10px 12px;text-align:left;font-weight:600}
-table.action td{padding:9px 12px;border-bottom:1px solid var(--border)}
-table.action tr:hover{background:var(--blue-light)}
-.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
-.badge.red{background:#fee2e2;color:var(--red)}
-.badge.green{background:#dcfce7;color:var(--green)}
-.badge.orange{background:#ffedd5;color:var(--orange)}
-.table-wrap{flex:1;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:10px}
-#loading,#error,#empty{display:none;text-align:center;padding:80px 20px;font-size:16px;color:var(--gray)}
-#loading .spinner{width:36px;height:36px;border:4px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:14px}
+.header{background:#1a1a2e;color:#fff;padding:12px 24px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:18px;font-weight:600}
+.header .meta{font-size:12px;opacity:.8}
+.filters{background:#fff;padding:10px 24px;display:flex;gap:12px;align-items:center;border-bottom:1px solid #ddd;flex-wrap:wrap}
+.filters label{font-size:12px;font-weight:600;color:#555}
+.filters select{padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:13px}
+.main{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto;gap:12px;padding:16px 24px;height:calc(100vh - 100px);overflow:hidden}
+.card{background:#fff;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.e1{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kpi{background:#fff;border-radius:8px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-align:center}
+.kpi .label{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.kpi .value{font-size:22px;font-weight:700;color:#1a1a2e}
+.kpi .sub{font-size:11px;margin-top:4px;font-weight:600}
+.kpi .icon{font-size:16px;margin-bottom:4px}
+.up{color:#d32f2f}.down{color:#2e7d32}.neutral{color:#1565c0}
+.badge{display:inline-block;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-top:2px}
+.badge-red{background:#fdecea;color:#d32f2f}
+.badge-green{background:#e8f5e9;color:#2e7d32}
+.badge-blue{background:#e3f2fd;color:#1565c0}
+.e2{min-height:0}
+.e3{min-height:0}
+.e4{grid-column:1/-1;overflow:auto;max-height:220px}
+.section-title{font-size:13px;font-weight:700;margin-bottom:8px;color:#1a1a2e;display:flex;align-items:center;gap:6px}
+.section-title span{font-size:14px}
+.chart-wrap{position:relative;width:100%;height:calc(100% - 28px)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#f5f5f5;padding:6px 8px;text-align:left;font-weight:600;position:sticky;top:0;border-bottom:2px solid #ddd}
+td{padding:5px 8px;border-bottom:1px solid #eee}
+tr:hover td{background:#f8f9ff}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.dot-red{background:#d32f2f}.dot-green{background:#2e7d32}.dot-yellow{background:#f9a825}
+.state-overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,.92);z-index:100}
+.spinner{width:36px;height:36px;border:3px solid #e0e0e0;border-top-color:#1565c0;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#error{color:var(--red)}
+.state-msg{margin-top:10px;font-size:14px;color:#666}
+.error-msg{color:#d32f2f;font-weight:600}
+@media(max-width:900px){
+  .main{grid-template-columns:1fr;height:auto;overflow:auto}
+  .e1{grid-template-columns:repeat(2,1fr)}
+  .e4{max-height:300px}
+}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>⚡ VALEO Enerji Dashboard — S6 Senaryosu</h1>
-  <div class="meta">Son Güncelleme: <span id="lastUpdate">—</span></div>
-</header>
+<div class="state-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="state-msg">Veriler yükleniyor...</div>
+</div>
+
+<div class="header">
+  <h1>VALEO Enerji Dashboard</h1>
+  <div class="meta">Son Güncelleme: <span id="lastUpdate">--</span></div>
+</div>
 
 <div class="filters">
   <label>Hat:</label>
   <select id="filterHat"><option value="Tümü">Tümü</option></select>
   <label>Enerji Tipi:</label>
   <select id="filterEnerji"><option value="Tümü">Tümü</option></select>
+  <label>Tarih Aralığı:</label>
+  <select id="filterTarih">
+    <option value="Tümü">Tümü</option>
+    <option value="7">Son 7 Gün</option>
+    <option value="14">Son 14 Gün</option>
+  </select>
 </div>
 
-<div class="tabs">
-  <div class="tab active" data-screen="e1">E1 — Özet</div>
-  <div class="tab" data-screen="e2">E2 — Trend</div>
-  <div class="tab" data-screen="e3">E3 — Kırılım</div>
-  <div class="tab" data-screen="e4">E4 — Aksiyon Tablosu</div>
+<div class="main">
+  <div class="e1" id="kpiArea"></div>
+
+  <div class="card e2">
+    <div class="section-title"><span>E2</span> Günlük Birim Basina kWh Trendi</div>
+    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+  </div>
+
+  <div class="card e3">
+    <div class="section-title"><span>E3</span> Hat Bazinda Tüketim Kirilimi</div>
+    <div class="chart-wrap"><canvas id="paretoChart"></canvas></div>
+  </div>
+
+  <div class="card e4">
+    <div class="section-title"><span>E4</span> Detay / Aksiyon Tablosu</div>
+    <div style="overflow:auto;max-height:180px" id="tableWrap">
+      <table>
+        <thead><tr><th>Tarih</th><th>Hat</th><th>Enerji Tipi</th><th>Tüketim (kWh)</th><th>Üretim Adedi</th><th>kWh/Birim</th><th>Hedef</th><th>Sapma %</th><th>CO2 (kg)</th><th>Durum</th></tr></thead>
+        <tbody id="detailBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
-
-<div id="loading"><div class="spinner"></div>Veri yükleniyor…</div>
-<div id="error">⚠ Veri yüklenemedi. Lütfen bağlantınızı kontrol edin.</div>
-<div id="empty">ℹ Seçilen filtrelere uygun veri bulunamadı.</div>
-
-<main id="mainContent" style="display:none">
-  <!-- E1 -->
-  <div class="screen active" id="e1">
-    <div class="kpi-row">
-      <div class="kpi"><div class="label">📊 Toplam Tüketim</div><div class="value" id="k1">—</div><div class="sub neutral" id="k1s"></div></div>
-      <div class="kpi"><div class="label">🏭 Toplam Üretim</div><div class="value" id="k2">—</div><div class="sub neutral" id="k2s"></div></div>
-      <div class="kpi"><div class="label">⚡ Ort. kWh/birim</div><div class="value" id="k3">—</div><div class="sub" id="k3s"></div></div>
-      <div class="kpi"><div class="label">🌿 Toplam CO₂ (ton)</div><div class="value" id="k4">—</div><div class="sub neutral" id="k4s"></div></div>
-    </div>
-    <div class="kpi-row">
-      <div class="kpi"><div class="label">🎯 Ort. Hedef Sapma</div><div class="value" id="k5">—</div><div class="sub" id="k5s"></div></div>
-      <div class="kpi"><div class="label">📈 En Verimli Hat</div><div class="value" id="k6">—</div><div class="sub neutral" id="k6s"></div></div>
-      <div class="kpi"><div class="label">📉 En Verimsiz Hat</div><div class="value" id="k7">—</div><div class="sub neutral" id="k7s"></div></div>
-      <div class="kpi"><div class="label">📅 Veri Aralığı</div><div class="value" id="k8" style="font-size:16px">—</div></div>
-    </div>
-    <div class="chart-area"><canvas id="chartE1"></canvas></div>
-  </div>
-
-  <!-- E2 -->
-  <div class="screen" id="e2">
-    <div class="chart-area" style="flex:1"><canvas id="chartE2"></canvas></div>
-  </div>
-
-  <!-- E3 -->
-  <div class="screen" id="e3">
-    <div class="charts-grid">
-      <div class="chart-area"><canvas id="chartE3a"></canvas></div>
-      <div class="chart-area"><canvas id="chartE3b"></canvas></div>
-    </div>
-  </div>
-
-  <!-- E4 -->
-  <div class="screen" id="e4">
-    <div class="kpi-row">
-      <div class="kpi"><div class="label">🔴 Kritik Sapmalar</div><div class="value" id="k4a">—</div></div>
-      <div class="kpi"><div class="label">🟠 Uyarı</div><div class="value" id="k4b">—</div></div>
-      <div class="kpi"><div class="label">🟢 Hedefte</div><div class="value" id="k4c">—</div></div>
-      <div class="kpi"><div class="label">📋 Toplam Kayıt</div><div class="value" id="k4d">—</div></div>
-    </div>
-    <div class="table-wrap">
-      <table class="action"><thead><tr><th>Tarih</th><th>Hat</th><th>Enerji Tipi</th><th>Gerçekleşen kWh/birim</th><th>Hedef kWh/birim</th><th>Sapma %</th><th>Durum</th></tr></thead><tbody id="actionBody"></tbody></table>
-    </div>
-  </div>
-</main>
 
 <script>
-const CSV_URL='https://docs.google.com/spreadsheets/d/1xB9uTcdJtLHyOrefS36OJU-HOGvdKEZ0U9FneN-5FwQ/export?format=csv&gid=938135206';
-let RAW=[],charts={};
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1xB9uTcdJtLHyOrefS36OJU-HOGvdKEZ0U9FneN-5FwQ/export?format=csv&gid=938135206';
 
-function parseNum(s){
-  if(!s&&s!==0)return 0;
-  const str=String(s).trim();
-  if(!str||str==='-')return 0;
-  const hasPeriod=str.includes('.');
-  const hasComma=str.includes(',');
-  if(hasPeriod&&hasComma){
-    return str.indexOf('.')<str.indexOf(',')
-      ?parseFloat(str.replace(/\./g,'').replace(',','.'))
-      :parseFloat(str.replace(/,/g,''));
-  }
-  if(hasComma&&!hasPeriod)return parseFloat(str.replace(',','.'));
-  if(hasPeriod&&!hasComma){
-    const parts=str.replace(/^-/,'').split('.');
-    if(parts.length===2&&parts[1].length===3&&parts[0]!=='0')
-      return parseFloat(str.replace(/\./g,''));
-    return parseFloat(str);
-  }
-  return parseFloat(str)||0;
+let rawData = [];
+let trendChart = null, paretoChart = null;
+
+function parseTR(s) {
+  if (!s) return 0;
+  return parseFloat(s.replace(/\./g, '').replace(',', '.'));
 }
 
-function fmtNum(n,d=0){return n.toLocaleString('tr-TR',{minimumFractionDigits:d,maximumFractionDigits:d})}
-function fmtDate(iso){if(!iso)return'—';const p=String(iso).split('-');if(p.length!==3)return iso;return p[2]+'.'+p[1]+'.'+p[0]}
-
-function csvSatirParse(satir,ayrac){
-  const sonuc=[];let alan='',tirnak=false;
-  for(let i=0;i<satir.length;i++){
-    const c=satir[i];
-    if(c==='"'){tirnak=!tirnak;continue}
-    if(c===ayrac&&!tirnak){sonuc.push(alan.trim());alan='';continue}
-    alan+=c;
-  }
-  sonuc.push(alan.trim());
-  return sonuc;
+function formatTR(n, dec) {
+  if (dec === undefined) dec = 2;
+  const parts = n.toFixed(dec).split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return parts.join(',');
 }
 
-function ayracTespit(ilkSatir){
-  const sc=(ilkSatir.match(/;/g)||[]).length;
-  const vc=(ilkSatir.match(/,/g)||[]).length;
-  return sc>=vc?';':',';
+function formatDate(iso) {
+  const p = iso.split('-');
+  return p[2] + '.' + p[1] + '.' + p[0];
 }
 
-function csvParse(metin){
-  const satirlar=metin.split(/\r?\n/).filter(s=>s.trim());
-  if(satirlar.length<2)return[];
-  const ayrac=ayracTespit(satirlar[0]);
-  const basliklar=csvSatirParse(satirlar[0],ayrac).map(b=>b.toLowerCase().trim());
-  return satirlar.slice(1).map(s=>{
-    const degerler=csvSatirParse(s,ayrac);
-    const obj={};
-    basliklar.forEach((b,i)=>{obj[b]=degerler[i]||''});
-    return obj;
-  });
-}
+async function fetchData() {
+  const res = await fetch(SHEET_URL);
+  if (!res.ok) throw new Error('Veri kaynagina ulasilamadi (HTTP ' + res.status + ')');
+  const text = await res.text();
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) throw new Error('Veri bulunamadi');
 
-function kolonBul(basliklar,adaylar){
-  for(const aday of adaylar){
-    const b=basliklar.find(b=>b.includes(aday.toLowerCase()));
-    if(b)return b;
-  }
-  return null;
-}
+  rawData = [];
+  var hatSet = new Set(), enerjiSet = new Set();
 
-document.getElementById('loading').style.display='block';
-
-fetch(CSV_URL)
-  .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()})
-  .then(metin=>{
-    document.getElementById('loading').style.display='none';
-    const satirlar=csvParse(metin);
-    if(!satirlar.length){document.getElementById('empty').style.display='block';return}
-
-    const basliklar=Object.keys(satirlar[0]);
-    const kol={
-      tarih:kolonBul(basliklar,['tarih','date']),
-      hat:kolonBul(basliklar,['hat']),
-      tip:kolonBul(basliklar,['enerji tipi','enerjitipi','tip','type']),
-      tuketim:kolonBul(basliklar,['tüketim (kwh)','tuketim (kwh)','tüketim','tuketim','kwh']),
-      uretim:kolonBul(basliklar,['üretim adedi','uretim adedi','üretim','uretim','adet']),
-      hedef:kolonBul(basliklar,['hedef kwh/birim','hedef kwh','hedef']),
-      co2f:kolonBul(basliklar,['co2 faktörü','co2 faktoru','co2'])
+  for (var i = 1; i < lines.length; i++) {
+    var cols = lines[i].split(';');
+    if (cols.length < 7) continue;
+    var row = {
+      tarih: cols[0].trim(),
+      hat: cols[1].trim(),
+      enerjiTipi: cols[2].trim(),
+      tuketim: parseTR(cols[3]),
+      uretim: parseTR(cols[4]),
+      hedef: parseTR(cols[5]),
+      co2Faktor: parseTR(cols[6])
     };
+    row.birimKwh = row.uretim > 0 ? row.tuketim / row.uretim : 0;
+    row.hedefSapma = row.hedef > 0 ? ((row.birimKwh - row.hedef) / row.hedef) * 100 : 0;
+    row.co2 = row.tuketim * row.co2Faktor;
+    rawData.push(row);
+    hatSet.add(row.hat);
+    enerjiSet.add(row.enerjiTipi);
+  }
 
-    RAW=satirlar.map(d=>({
-      tarih:(d[kol.tarih]||'').trim(),
-      hat:(d[kol.hat]||'').trim(),
-      tip:(d[kol.tip]||'').trim(),
-      tuketim:parseNum(d[kol.tuketim]),
-      uretim:parseNum(d[kol.uretim]),
-      hedef:parseNum(d[kol.hedef]),
-      co2f:parseNum(d[kol.co2f])||0.415
-    })).filter(d=>d.tarih);
+  var hatSel = document.getElementById('filterHat');
+  hatSet.forEach(function(h) { var o = document.createElement('option'); o.value = h; o.textContent = h; hatSel.appendChild(o); });
+  var enerjiSel = document.getElementById('filterEnerji');
+  enerjiSet.forEach(function(e) { var o = document.createElement('option'); o.value = e; o.textContent = e; enerjiSel.appendChild(o); });
 
-    if(!RAW.length){document.getElementById('empty').style.display='block';return}
+  var dates = rawData.map(function(r) { return r.tarih; }).sort();
+  document.getElementById('lastUpdate').textContent = formatDate(dates[dates.length - 1]);
 
-    const hats=[...new Set(RAW.map(d=>d.hat))].sort();
-    const tips=[...new Set(RAW.map(d=>d.tip))].sort();
-    hats.forEach(h=>{const o=document.createElement('option');o.value=h;o.textContent=h;document.getElementById('filterHat').appendChild(o)});
-    tips.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;document.getElementById('filterEnerji').appendChild(o)});
-    const dates=RAW.map(d=>d.tarih).sort();
-    document.getElementById('lastUpdate').textContent=fmtDate(dates[dates.length-1]);
-    document.getElementById('mainContent').style.display='';
-    render();
-  })
-  .catch(e=>{
-    console.error('Veri yükleme hatası:',e);
-    document.getElementById('loading').style.display='none';
-    document.getElementById('error').style.display='block';
-    document.getElementById('error').innerHTML='⚠ Veri yüklenemedi: '+e.message+'<br><small>Google Sheets paylaşım ayarını kontrol edin.</small>';
+  document.getElementById('loadingOverlay').style.display = 'none';
+  render();
+}
+
+function getFiltered() {
+  var hat = document.getElementById('filterHat').value;
+  var enerji = document.getElementById('filterEnerji').value;
+  var tarih = document.getElementById('filterTarih').value;
+
+  var data = rawData.slice();
+  if (hat !== 'Tümü') data = data.filter(function(r) { return r.hat === hat; });
+  if (enerji !== 'Tümü') data = data.filter(function(r) { return r.enerjiTipi === enerji; });
+  if (tarih !== 'Tümü') {
+    var allDates = [];
+    data.forEach(function(r) { if (allDates.indexOf(r.tarih) === -1) allDates.push(r.tarih); });
+    allDates.sort();
+    var last = allDates.slice(-parseInt(tarih));
+    data = data.filter(function(r) { return last.indexOf(r.tarih) >= 0; });
+  }
+  return data;
+}
+
+function render() {
+  var data = getFiltered();
+  renderKPI(data);
+  renderTrend(data);
+  renderPareto(data);
+  renderTable(data);
+}
+
+function renderKPI(data) {
+  var area = document.getElementById('kpiArea');
+  if (data.length === 0) {
+    area.innerHTML = '<div class="kpi" style="grid-column:1/-1;padding:30px"><div class="label">UYARI</div><div style="color:#999;font-size:13px">Secilen filtrelere ait veri bulunamadi.</div></div>';
+    return;
+  }
+
+  var totalTuketim = 0, totalUretim = 0, totalHedef = 0, totalCO2 = 0;
+  data.forEach(function(r) {
+    totalTuketim += r.tuketim;
+    totalUretim += r.uretim;
+    totalHedef += r.hedef;
+    totalCO2 += r.co2;
+  });
+  var avgBirimKwh = totalUretim > 0 ? totalTuketim / totalUretim : 0;
+  var avgHedef = totalHedef / data.length;
+  var avgSapma = avgHedef > 0 ? ((avgBirimKwh - avgHedef) / avgHedef) * 100 : 0;
+  var uniqueDays = [];
+  data.forEach(function(r) { if (uniqueDays.indexOf(r.tarih) === -1) uniqueDays.push(r.tarih); });
+
+  var sapmaClass = avgSapma > 5 ? 'up' : avgSapma < -2 ? 'down' : 'neutral';
+  var sapmaBadge = avgSapma > 5 ? 'badge-red' : avgSapma < -2 ? 'badge-green' : 'badge-blue';
+  var sapmaLabel = avgSapma > 5 ? 'Hedef Ustu' : avgSapma < -2 ? 'Hedef Alti' : 'Hedefte';
+  var sapmaArrow = avgSapma > 5 ? '▲' : avgSapma < -2 ? '▼' : '●';
+
+  area.innerHTML =
+    '<div class="kpi"><div class="icon">⚡</div><div class="label">TOPLAM TUKETIM</div><div class="value">' + formatTR(totalTuketim, 0) + ' kWh</div><div class="sub neutral">' + uniqueDays.length + ' gun</div></div>' +
+    '<div class="kpi"><div class="icon">�icing</div><div class="label">TOPLAM URETIM</div><div class="value">' + formatTR(totalUretim, 0) + ' adet</div></div>' +
+    '<div class="kpi"><div class="icon">📐</div><div class="label">BIRIM BASINA kWh</div><div class="value">' + formatTR(avgBirimKwh, 2) + '</div><div class="sub neutral">Ort. Hedef: ' + formatTR(avgHedef, 2) + '</div></div>' +
+    '<div class="kpi"><div class="icon">' + sapmaArrow + '</div><div class="label">HEDEF SAPMA</div><div class="value ' + sapmaClass + '">' + (avgSapma >= 0 ? '+' : '') + formatTR(avgSapma, 1) + '%</div><div class="badge ' + sapmaBadge + '">' + sapmaLabel + '</div></div>' +
+    '<div class="kpi"><div class="icon">🌿</div><div class="label">TOPLAM CO2</div><div class="value">' + formatTR(totalCO2 / 1000, 1) + ' ton</div><div class="sub neutral">' + formatTR(totalCO2 / totalUretim, 3) + ' kg/birim</div></div>';
+}
+
+function renderTrend(data) {
+  var ctx = document.getElementById('trendChart');
+  if (trendChart) trendChart.destroy();
+
+  var dateSet = [], hatSet = [];
+  data.forEach(function(r) {
+    if (dateSet.indexOf(r.tarih) === -1) dateSet.push(r.tarih);
+    if (hatSet.indexOf(r.hat) === -1) hatSet.push(r.hat);
+  });
+  dateSet.sort(); hatSet.sort();
+
+  var colors = { 'Hat-1': '#1565c0', 'Hat-2': '#6a1b9a', 'Hat-3': '#00838f' };
+  var datasets = hatSet.map(function(hat) {
+    return {
+      label: hat,
+      data: dateSet.map(function(d) {
+        var rows = data.filter(function(r) { return r.tarih === d && r.hat === hat; });
+        if (rows.length === 0) return null;
+        var t = 0; rows.forEach(function(r) { t += r.tuketim; });
+        var u = rows[0].uretim;
+        return u > 0 ? +(t / u).toFixed(3) : null;
+      }),
+      borderColor: colors[hat] || '#888',
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      pointRadius: 1.5,
+      tension: 0.3
+    };
   });
 
-document.getElementById('filterHat').onchange=render;
-document.getElementById('filterEnerji').onchange=render;
+  datasets.push({
+    label: 'Hedef (ort.)',
+    data: dateSet.map(function(d) {
+      var rows = data.filter(function(r) { return r.tarih === d; });
+      if (rows.length === 0) return null;
+      var s = 0; rows.forEach(function(r) { s += r.hedef; });
+      return s / rows.length;
+    }),
+    borderColor: '#bdbdbd',
+    borderDash: [5, 3],
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    pointRadius: 0
+  });
 
-document.querySelectorAll('.tab').forEach(t=>t.onclick=function(){
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
-  this.classList.add('active');
-  document.getElementById(this.dataset.screen).classList.add('active');
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: dateSet.map(formatDate), datasets: datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { font: { size: 10 }, maxRotation: 45 } },
+        y: { title: { display: true, text: 'kWh / Birim', font: { size: 11 } }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function renderPareto(data) {
+  var ctx = document.getElementById('paretoChart');
+  if (paretoChart) paretoChart.destroy();
+
+  var hatSet = [], enerjiSet = [];
+  data.forEach(function(r) {
+    if (hatSet.indexOf(r.hat) === -1) hatSet.push(r.hat);
+    if (enerjiSet.indexOf(r.enerjiTipi) === -1) enerjiSet.push(r.enerjiTipi);
+  });
+  hatSet.sort(); enerjiSet.sort();
+
+  var bgColors = { 'Elektrik': '#1565c0', 'Dogalgaz': '#78909c', 'Doğalgaz': '#78909c' };
+  var datasets = enerjiSet.map(function(tip) {
+    return {
+      label: tip,
+      data: hatSet.map(function(hat) {
+        var s = 0;
+        data.forEach(function(r) { if (r.hat === hat && r.enerjiTipi === tip) s += r.tuketim; });
+        return s;
+      }),
+      backgroundColor: bgColors[tip] || '#aaa',
+      borderRadius: 4
+    };
+  });
+
+  paretoChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: hatSet, datasets: datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { font: { size: 11 } } },
+        y: { title: { display: true, text: 'Toplam Tuketim (kWh)', font: { size: 11 } }, ticks: { font: { size: 10 }, callback: function(v) { return formatTR(v, 0); } } }
+      }
+    }
+  });
+}
+
+function renderTable(data) {
+  var body = document.getElementById('detailBody');
+  if (data.length === 0) {
+    body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;color:#999">Secilen filtrelere ait veri bulunamadi.</td></tr>';
+    return;
+  }
+
+  var sorted = data.slice().sort(function(a, b) { return b.hedefSapma - a.hedefSapma; });
+  var html = '';
+  sorted.forEach(function(r) {
+    var dotClass = 'dot-green', statusText = 'Hedefte';
+    if (r.hedefSapma > 10) { dotClass = 'dot-red'; statusText = 'Kritik'; }
+    else if (r.hedefSapma > 5) { dotClass = 'dot-yellow'; statusText = 'Uyari'; }
+    else if (r.hedefSapma < -5) { dotClass = 'dot-green'; statusText = 'Iyi'; }
+    var sapClass = r.hedefSapma > 5 ? 'up' : r.hedefSapma < -2 ? 'down' : 'neutral';
+    html += '<tr>' +
+      '<td>' + formatDate(r.tarih) + '</td>' +
+      '<td>' + r.hat + '</td>' +
+      '<td>' + r.enerjiTipi + '</td>' +
+      '<td style="text-align:right">' + formatTR(r.tuketim, 1) + '</td>' +
+      '<td style="text-align:right">' + formatTR(r.uretim, 0) + '</td>' +
+      '<td style="text-align:right">' + formatTR(r.birimKwh, 3) + '</td>' +
+      '<td style="text-align:right">' + formatTR(r.hedef, 2) + '</td>' +
+      '<td style="text-align:right;font-weight:600" class="' + sapClass + '">' + (r.hedefSapma >= 0 ? '+' : '') + formatTR(r.hedefSapma, 1) + '%</td>' +
+      '<td style="text-align:right">' + formatTR(r.co2, 1) + '</td>' +
+      '<td><span class="status-dot ' + dotClass + '"></span>' + statusText + '</td>' +
+      '</tr>';
+  });
+  body.innerHTML = html;
+}
+
+document.getElementById('filterHat').addEventListener('change', render);
+document.getElementById('filterEnerji').addEventListener('change', render);
+document.getElementById('filterTarih').addEventListener('change', render);
+
+fetchData().catch(function(err) {
+  document.getElementById('loadingOverlay').innerHTML = '<div class="error-msg">Hata: ' + err.message + '</div><div class="state-msg" style="margin-top:8px">Lutfen internet baglantinizi kontrol edin ve sayfayi yenileyin.</div>';
 });
-
-function filtered(){
-  const h=document.getElementById('filterHat').value;
-  const e=document.getElementById('filterEnerji').value;
-  return RAW.filter(d=>(h==='Tümü'||d.hat===h)&&(e==='Tümü'||d.tip===e));
-}
-
-function render(){
-  const data=filtered();
-  if(!data.length){document.getElementById('empty').style.display='block';document.getElementById('mainContent').style.display='none';return}
-  document.getElementById('empty').style.display='none';document.getElementById('mainContent').style.display='';
-
-  const totTuketim=data.reduce((s,d)=>s+d.tuketim,0);
-  const totUretim=data.reduce((s,d)=>s+d.uretim,0);
-  const totCO2=data.reduce((s,d)=>s+d.tuketim*d.co2f,0)/1000;
-
-  const rows=data.map(d=>{
-    const gerceklesen=d.uretim?d.tuketim/d.uretim:0;
-    const sapma=d.hedef?((gerceklesen-d.hedef)/d.hedef)*100:0;
-    return{...d,gerceklesen,sapma};
-  });
-
-  const avgKwh=totUretim?totTuketim/totUretim:0;
-  const avgSapma=rows.length?rows.reduce((s,r)=>s+r.sapma,0)/rows.length:0;
-
-  document.getElementById('k1').textContent=fmtNum(totTuketim,0)+' kWh';
-  document.getElementById('k2').textContent=fmtNum(totUretim,0)+' adet';
-  document.getElementById('k3').textContent=fmtNum(avgKwh,2);
-  const k3s=document.getElementById('k3s');
-  k3s.textContent=avgSapma>=0?'▲ Hedefin üstünde':'▼ Hedefin altında';
-  k3s.className='sub '+(avgSapma>5?'negative':avgSapma<-5?'green':'neutral');
-  document.getElementById('k4').textContent=fmtNum(totCO2,1);
-
-  document.getElementById('k5').textContent=(avgSapma>=0?'+':'')+fmtNum(avgSapma,1)+' %';
-  const k5s=document.getElementById('k5s');
-  k5s.textContent=Math.abs(avgSapma)>10?'Kritik seviye':Math.abs(avgSapma)>5?'Dikkat':'Normal';
-  k5s.className='sub '+(Math.abs(avgSapma)>10?'negative':Math.abs(avgSapma)>5?'orange':'positive');
-
-  const hatPerf={};
-  rows.forEach(r=>{if(!hatPerf[r.hat])hatPerf[r.hat]={t:0,u:0};hatPerf[r.hat].t+=r.tuketim;hatPerf[r.hat].u+=r.uretim});
-  const hatList=Object.entries(hatPerf).map(([h,v])=>({hat:h,kwh:v.u?v.t/v.u:0}));
-  hatList.sort((a,b)=>a.kwh-b.kwh);
-  document.getElementById('k6').textContent=hatList[0]?hatList[0].hat:'—';
-  document.getElementById('k6s').textContent=hatList[0]?fmtNum(hatList[0].kwh,2)+' kWh/birim':'';
-  document.getElementById('k7').textContent=hatList[hatList.length-1]?hatList[hatList.length-1].hat:'—';
-  document.getElementById('k7s').textContent=hatList[hatList.length-1]?fmtNum(hatList[hatList.length-1].kwh,2)+' kWh/birim':'';
-
-  const dates=[...new Set(data.map(d=>d.tarih))].sort();
-  document.getElementById('k8').textContent=fmtDate(dates[0])+' – '+fmtDate(dates[dates.length-1]);
-
-  const dailyTotals=dates.map(dt=>data.filter(d=>d.tarih===dt).reduce((s,d)=>s+d.tuketim,0));
-  destroyChart('chartE1');
-  charts.chartE1=new Chart(document.getElementById('chartE1'),{type:'bar',data:{
-    labels:dates.map(fmtDate),datasets:[{label:'Günlük Toplam Tüketim (kWh)',data:dailyTotals,backgroundColor:'#2563eb',borderRadius:4}]
-  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top'}},scales:{x:{ticks:{maxRotation:45,font:{size:10}}},y:{beginAtZero:true,title:{display:true,text:'kWh'}}}}});
-
-  const hats=[...new Set(data.map(d=>d.hat))].sort();
-  const colors=['#2563eb','#6b7280','#ea580c','#16a34a'];
-  const dsE2=hats.map((h,i)=>({
-    label:h+' (kWh/birim)',
-    data:dates.map(dt=>{const hd=data.filter(d=>d.tarih===dt&&d.hat===h);const t=hd.reduce((s,d)=>s+d.tuketim,0);const u=hd.reduce((s,d)=>s+d.uretim,0);return u?+(t/u).toFixed(3):null}),
-    borderColor:colors[i%4],backgroundColor:colors[i%4]+'22',tension:.3,fill:false,pointRadius:2
-  }));
-  destroyChart('chartE2');
-  charts.chartE2=new Chart(document.getElementById('chartE2'),{type:'line',data:{labels:dates.map(fmtDate),datasets:dsE2},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'},title:{display:true,text:'Günlük Birim Başına kWh Trendi'}},scales:{x:{ticks:{maxRotation:45,font:{size:10}}},y:{title:{display:true,text:'kWh / birim'}}}}});
-
-  const hatTotals=hats.map(h=>data.filter(d=>d.hat===h).reduce((s,d)=>s+d.tuketim,0));
-  destroyChart('chartE3a');
-  charts.chartE3a=new Chart(document.getElementById('chartE3a'),{type:'bar',data:{
-    labels:hats,datasets:[{label:'Toplam Tüketim (kWh)',data:hatTotals,backgroundColor:hats.map((_,i)=>colors[i%4]),borderRadius:6}]
-  },options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{title:{display:true,text:'Hat Bazında Toplam Tüketim'},legend:{display:false}},scales:{x:{title:{display:true,text:'kWh'}}}}});
-
-  const tips=[...new Set(data.map(d=>d.tip))].sort();
-  const tipColors=['#2563eb','#6b7280','#ea580c'];
-  const dsE3b=tips.map((t,i)=>({label:t,data:hats.map(h=>data.filter(d=>d.hat===h&&d.tip===t).reduce((s,d)=>s+d.tuketim,0)),backgroundColor:tipColors[i%3],borderRadius:4}));
-  destroyChart('chartE3b');
-  charts.chartE3b=new Chart(document.getElementById('chartE3b'),{type:'bar',data:{labels:hats,datasets:dsE3b},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{title:{display:true,text:'Hat × Enerji Tipi Kırılımı'},legend:{position:'top'}},scales:{y:{title:{display:true,text:'kWh'},beginAtZero:true}}}});
-
-  rows.sort((a,b)=>Math.abs(b.sapma)-Math.abs(a.sapma));
-  let critCount=0,warnCount=0,okCount=0;
-  const tbody=document.getElementById('actionBody');
-  tbody.innerHTML='';
-  rows.forEach(r=>{
-    let cls,lbl;
-    if(r.sapma>10){cls='red';lbl='🔴 Kritik';critCount++}
-    else if(r.sapma>5){cls='orange';lbl='🟠 Uyarı';warnCount++}
-    else{cls='green';lbl='🟢 Hedefte';okCount++}
-    const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+fmtDate(r.tarih)+'</td><td>'+r.hat+'</td><td>'+r.tip+'</td><td>'+fmtNum(r.gerceklesen,2)+'</td><td>'+fmtNum(r.hedef,2)+'</td><td>'+(r.sapma>=0?'+':'')+fmtNum(r.sapma,1)+' %</td><td><span class="badge '+cls+'">'+lbl+'</span></td>';
-    tbody.appendChild(tr);
-  });
-  document.getElementById('k4a').textContent=critCount;
-  document.getElementById('k4b').textContent=warnCount;
-  document.getElementById('k4c').textContent=okCount;
-  document.getElementById('k4d').textContent=rows.length;
-}
-
-function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
 </script>
 </body>
 </html>
