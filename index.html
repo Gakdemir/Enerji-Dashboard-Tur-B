@@ -1,1 +1,39 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0;url=dashboard/tur-B-2.html"><title>Enerji Dashboard – VALEO</title></head><body><p>Yönlendiriliyor… <a href="dashboard/tur-B-2.html">Tıklayın</a></p></body></html>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VALEO Enerji Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.container{text-align:center;max-width:600px;padding:40px}
+h1{font-size:24px;color:#1e293b;margin-bottom:8px}
+p.sub{color:#6b7280;font-size:14px;margin-bottom:40px}
+.cards{display:flex;gap:20px;justify-content:center}
+a.card{display:block;text-decoration:none;background:#fff;border:2px solid #e2e8f0;border-radius:14px;padding:32px 28px;width:240px;transition:.2s}
+a.card:hover{border-color:#2563eb;box-shadow:0 4px 20px rgba(37,99,235,.15);transform:translateY(-2px)}
+a.card .icon{font-size:36px;margin-bottom:12px}
+a.card .title{font-size:18px;font-weight:700;color:#1e293b;margin-bottom:6px}
+a.card .desc{font-size:13px;color:#6b7280}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>⚡ VALEO Enerji Dashboard</h1>
+  <p class="sub">Görüntülemek istediğiniz panoyu seçin</p>
+  <div class="cards">
+    <a class="card" href="dashboard/tur-B-1.html">
+      <div class="icon">📊</div>
+      <div class="title">Tur B-1</div>
+      <div class="desc">İlk versiyon dashboard</div>
+    </a>
+    <a class="card" href="dashboard/tur-B-2.html">
+      <div class="icon">📈</div>
+      <div class="title">Tur B-2</div>
+      <div class="desc">S6 Enerji Senaryosu</div>
+    </a>
+  </div>
+</div>
+</body>
+</html>
