@@ -7,899 +7,555 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --mavi: #1565C0;
-      --mavi-ac: #1E88E5;
-      --gri: #90A4AE;
-      --yesil: #2E7D32;
-      --kirmizi: #C62828;
-      --sari: #F9A825;
-      --arka: #F0F4F8;
-      --kart: #FFFFFF;
-      --yazi: #1A2332;
-      --yazi2: #546E7A;
-      --kenar: #CFD8DC;
+      --mavi: #1565C0; --mavi-ac: #1E88E5; --gri: #90A4AE;
+      --yesil: #2E7D32; --kirmizi: #C62828; --sari: #F9A825;
+      --arka: #F0F4F8; --kart: #FFFFFF; --yazi: #1A2332;
+      --yazi2: #546E7A; --kenar: #CFD8DC;
       --font: 'Segoe UI', system-ui, sans-serif;
     }
+    html, body { height: 100%; font-family: var(--font); background: var(--arka); color: var(--yazi); font-size: 14px; overflow: hidden; }
 
-    html, body {
-      height: 100%;
-      font-family: var(--font);
-      background: var(--arka);
-      color: var(--yazi);
-      font-size: 14px;
-      overflow: hidden;
-    }
+    #uygulama { display: grid; grid-template-rows: auto auto 1fr; height: 100vh; padding: 10px 14px; gap: 8px; }
 
-    /* ─── LAYOUT ─── */
-    #uygulama {
-      display: grid;
-      grid-template-rows: auto auto 1fr;
-      height: 100vh;
-      padding: 10px 14px;
-      gap: 8px;
-    }
-
-    /* ─── HEADER ─── */
-    #baslik-alani {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--mavi);
-      color: #fff;
-      border-radius: 8px;
-      padding: 10px 18px;
-    }
+    #baslik-alani { display: flex; align-items: center; justify-content: space-between; background: var(--mavi); color: #fff; border-radius: 8px; padding: 10px 18px; }
     #baslik-alani h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: .3px; }
     #baslik-alani .meta { font-size: .78rem; opacity: .85; text-align: right; line-height: 1.5; }
     #son-guncelleme { font-weight: 600; }
 
-    /* ─── FİLTRE ─── */
-    #filtre-alani {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+    #filtre-alani { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     #filtre-alani label { font-size: .78rem; color: var(--yazi2); font-weight: 600; }
-    #filtre-alani select, #filtre-alani input {
-      border: 1px solid var(--kenar);
-      border-radius: 5px;
-      padding: 4px 8px;
-      font-size: .78rem;
-      background: var(--kart);
-      color: var(--yazi);
-      cursor: pointer;
-    }
+    #filtre-alani select, #filtre-alani input { border: 1px solid var(--kenar); border-radius: 5px; padding: 4px 8px; font-size: .78rem; background: var(--kart); color: var(--yazi); cursor: pointer; }
     #filtre-alani select:focus, #filtre-alani input:focus { outline: 2px solid var(--mavi-ac); }
     .filtre-grup { display: flex; align-items: center; gap: 5px; }
-    #yukleme-durumu {
-      margin-left: auto;
-      font-size: .75rem;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-weight: 600;
-    }
-    .durum-yukleniyor { background: #E3F2FD; color: #1565C0; }
-    .durum-hazir      { background: #E8F5E9; color: #2E7D32; }
-    .durum-hata       { background: #FFEBEE; color: #C62828; }
+    #yukleme-durumu { margin-left: auto; font-size: .75rem; padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+    .durum-hazir { background: #E8F5E9; color: #2E7D32; }
 
-    /* ─── ANA İÇERİK ─── */
-    #icerik {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto minmax(0, 2fr) minmax(0, 1.2fr);
-      gap: 8px;
-      min-height: 0;
-    }
+    #icerik { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto minmax(0,2fr) minmax(0,1.2fr); gap: 8px; min-height: 0; }
 
-    /* ─── PANEL KARTI ─── */
-    .panel {
-      background: var(--kart);
-      border: 1px solid var(--kenar);
-      border-radius: 8px;
-      padding: 10px 14px;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      overflow: hidden;
-    }
-    .panel-baslik {
-      font-size: .72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .6px;
-      color: var(--yazi2);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .panel-baslik .rozet {
-      background: var(--mavi);
-      color: #fff;
-      border-radius: 4px;
-      padding: 1px 6px;
-      font-size: .65rem;
-    }
+    .panel { background: var(--kart); border: 1px solid var(--kenar); border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .panel-baslik { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--yazi2); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .panel-baslik .rozet { background: var(--mavi); color: #fff; border-radius: 4px; padding: 1px 6px; font-size: .65rem; }
 
-    /* ─── E1: KPI KARTLARI ─── */
-    #e1 {
-      grid-column: 1 / -1;
-    }
-    #kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-    }
-    .kpi-kart {
-      background: var(--arka);
-      border: 1px solid var(--kenar);
-      border-radius: 6px;
-      padding: 10px 12px;
-      position: relative;
-      overflow: hidden;
-    }
-    .kpi-kart::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 4px;
-      border-radius: 6px 0 0 6px;
-    }
-    .kpi-kart.mavi::before  { background: var(--mavi); }
-    .kpi-kart.yesil::before { background: var(--yesil); }
+    #e1 { grid-column: 1 / -1; }
+    #kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .kpi-kart { background: var(--arka); border: 1px solid var(--kenar); border-radius: 6px; padding: 10px 12px; position: relative; overflow: hidden; }
+    .kpi-kart::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 6px 0 0 6px; }
+    .kpi-kart.mavi::before    { background: var(--mavi); }
+    .kpi-kart.yesil::before   { background: var(--yesil); }
     .kpi-kart.kirmizi::before { background: var(--kirmizi); }
-    .kpi-kart.sari::before  { background: var(--sari); }
-    .kpi-kart.gri::before   { background: var(--gri); }
+    .kpi-kart.sari::before    { background: var(--sari); }
+    .kpi-kart.gri::before     { background: var(--gri); }
 
     .kpi-etiket { font-size: .68rem; color: var(--yazi2); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
     .kpi-deger  { font-size: 1.45rem; font-weight: 700; line-height: 1.2; margin: 3px 0 2px; color: var(--yazi); }
     .kpi-alt    { font-size: .7rem; color: var(--yazi2); }
-    .kpi-badge  {
-      display: inline-flex; align-items: center; gap: 3px;
-      font-size: .68rem; font-weight: 700;
-      padding: 1px 6px; border-radius: 10px; margin-top: 3px;
-    }
+    .kpi-badge  { display: inline-flex; align-items: center; gap: 3px; font-size: .68rem; font-weight: 700; padding: 1px 6px; border-radius: 10px; margin-top: 3px; }
     .badge-iyi    { background: #E8F5E9; color: #2E7D32; }
     .badge-kotu   { background: #FFEBEE; color: #C62828; }
     .badge-normal { background: #FFF8E1; color: #F57F17; }
 
-    /* ─── GRAFİK ALANI ─── */
-    .grafik-sarici {
-      flex: 1;
-      min-height: 0;
-      position: relative;
-    }
+    .grafik-sarici { flex: 1; min-height: 0; position: relative; }
     canvas { width: 100% !important; }
 
-    /* ─── E4: TABLO ─── */
     #e4 { overflow: hidden; }
     .tablo-sarici { flex: 1; overflow-y: auto; min-height: 0; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: .73rem;
-    }
+    table { width: 100%; border-collapse: collapse; font-size: .73rem; }
     thead tr { background: var(--mavi); color: #fff; position: sticky; top: 0; z-index: 1; }
     thead th { padding: 6px 8px; text-align: left; font-weight: 600; white-space: nowrap; }
     tbody tr { border-bottom: 1px solid var(--kenar); }
     tbody tr:hover { background: #E3F2FD; }
     tbody td { padding: 5px 8px; white-space: nowrap; }
-    .durum-pill {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 2px 8px; border-radius: 10px; font-size: .65rem; font-weight: 700;
-    }
+    .durum-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: .65rem; font-weight: 700; }
     .pill-iyi    { background: #E8F5E9; color: #2E7D32; }
     .pill-kotu   { background: #FFEBEE; color: #C62828; }
     .pill-normal { background: #FFF8E1; color: #F57F17; }
 
-    /* ─── HATA / BOŞ DURUMU ─── */
-    .bilgi-kutusu {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      flex: 1; gap: 8px; color: var(--yazi2); font-size: .8rem;
-    }
-    .bilgi-kutusu .ikon { font-size: 2rem; }
-
-    /* scrollbar */
     .tablo-sarici::-webkit-scrollbar { width: 5px; }
     .tablo-sarici::-webkit-scrollbar-track { background: transparent; }
     .tablo-sarici::-webkit-scrollbar-thumb { background: var(--kenar); border-radius: 3px; }
   </style>
 </head>
 <body>
-
 <div id="uygulama">
 
-  <!-- BAŞLIK -->
   <div id="baslik-alani">
-    <div>
-      <h1>⚡ Enerji Tüketim Dashboard'u – VALEO</h1>
-    </div>
+    <div><h1>⚡ Enerji Tüketim Dashboard'u – VALEO</h1></div>
     <div class="meta">
       <div>Son Güncelleme: <span id="son-guncelleme">—</span></div>
       <div style="opacity:.7">S6 Enerji Senaryosu</div>
     </div>
   </div>
 
-  <!-- FİLTRE -->
   <div id="filtre-alani">
-    <div class="filtre-grup">
-      <label for="hat-filtre">Hat:</label>
-      <select id="hat-filtre"><option value="">Tümü</option></select>
-    </div>
-    <div class="filtre-grup">
-      <label for="tip-filtre">Enerji Tipi:</label>
-      <select id="tip-filtre"><option value="">Tümü</option></select>
-    </div>
-    <div class="filtre-grup">
-      <label for="donem-filtre">Başlangıç:</label>
-      <input type="date" id="baslangic-filtre" />
-    </div>
-    <div class="filtre-grup">
-      <label>–</label>
-      <input type="date" id="bitis-filtre" />
-    </div>
-    <div class="filtre-grup">
-      <label for="siralama">Sıralama:</label>
+    <div class="filtre-grup"><label>Hat:</label><select id="hat-filtre"><option value="">Tümü</option></select></div>
+    <div class="filtre-grup"><label>Enerji Tipi:</label><select id="tip-filtre"><option value="">Tümü</option></select></div>
+    <div class="filtre-grup"><label>Başlangıç:</label><input type="date" id="baslangic-filtre" /></div>
+    <div class="filtre-grup"><label>–</label><input type="date" id="bitis-filtre" /></div>
+    <div class="filtre-grup"><label>Sıralama:</label>
       <select id="siralama">
         <option value="tarih">Tarihe Göre</option>
         <option value="sapma">Sapmaya Göre</option>
         <option value="tuketim">Tüketime Göre</option>
       </select>
     </div>
-    <span id="yukleme-durumu" class="durum-yukleniyor">⏳ Yükleniyor…</span>
+    <span id="yukleme-durumu" class="durum-hazir">✓ Hazır</span>
   </div>
 
-  <!-- İÇERİK -->
   <div id="icerik">
-
-    <!-- E1: KPI -->
     <div class="panel" id="e1">
       <div class="panel-baslik"><span class="rozet">E1</span> Özet / KPI</div>
       <div id="kpi-grid">
-        <div class="kpi-kart mavi" id="kpi-toplam-tuketim">
-          <div class="kpi-etiket">Toplam Tüketim</div>
-          <div class="kpi-deger">—</div>
-          <div class="kpi-alt">kWh</div>
-        </div>
-        <div class="kpi-kart gri" id="kpi-toplam-uretim">
-          <div class="kpi-etiket">Toplam Üretim</div>
-          <div class="kpi-deger">—</div>
-          <div class="kpi-alt">Adet</div>
-        </div>
-        <div class="kpi-kart sari" id="kpi-birim-kwh">
-          <div class="kpi-etiket">Birim Başına kWh</div>
-          <div class="kpi-deger">—</div>
-          <div class="kpi-alt">kWh / Adet</div>
-        </div>
-        <div class="kpi-kart" id="kpi-hedef-sapma">
-          <div class="kpi-etiket">Hedef Sapma %</div>
-          <div class="kpi-deger">—</div>
-          <div class="kpi-alt">Hedefe göre fark</div>
-        </div>
-        <div class="kpi-kart gri" id="kpi-co2">
-          <div class="kpi-etiket">CO₂ Etkisi</div>
-          <div class="kpi-deger">—</div>
-          <div class="kpi-alt">ton CO₂</div>
-        </div>
+        <div class="kpi-kart mavi" id="kpi-toplam-tuketim"><div class="kpi-etiket">Toplam Tüketim</div><div class="kpi-deger">—</div><div class="kpi-alt">kWh</div></div>
+        <div class="kpi-kart gri" id="kpi-toplam-uretim"><div class="kpi-etiket">Toplam Üretim</div><div class="kpi-deger">—</div><div class="kpi-alt">Adet</div></div>
+        <div class="kpi-kart sari" id="kpi-birim-kwh"><div class="kpi-etiket">Birim Başına kWh</div><div class="kpi-deger">—</div><div class="kpi-alt">kWh / Adet</div></div>
+        <div class="kpi-kart" id="kpi-hedef-sapma"><div class="kpi-etiket">Hedef Sapma %</div><div class="kpi-deger">—</div><div class="kpi-alt">Hedefe göre fark</div></div>
+        <div class="kpi-kart gri" id="kpi-co2"><div class="kpi-etiket">CO₂ Etkisi</div><div class="kpi-deger">—</div><div class="kpi-alt">ton CO₂</div></div>
       </div>
     </div>
 
-    <!-- E2: TREND -->
     <div class="panel" id="e2">
       <div class="panel-baslik"><span class="rozet">E2</span> Trend – Birim Başına kWh (Zaman Serisi)</div>
-      <div class="grafik-sarici">
-        <canvas id="trend-grafik"></canvas>
-      </div>
+      <div class="grafik-sarici"><canvas id="trend-grafik"></canvas></div>
     </div>
 
-    <!-- E3: KIRILIM / PARETO -->
     <div class="panel" id="e3">
       <div class="panel-baslik"><span class="rozet">E3</span> Kırılım – Hat Bazında Tüketim (Pareto)</div>
-      <div class="grafik-sarici">
-        <canvas id="kirilim-grafik"></canvas>
-      </div>
+      <div class="grafik-sarici"><canvas id="kirilim-grafik"></canvas></div>
     </div>
 
-    <!-- E4: DETAY / AKSİYON -->
     <div class="panel" id="e4" style="grid-column: 1 / -1; grid-row: 3;">
       <div class="panel-baslik"><span class="rozet">E4</span> Detay / Aksiyon Tablosu</div>
       <div class="tablo-sarici">
         <table id="detay-tablo">
-          <thead>
-            <tr>
-              <th>Tarih</th>
-              <th>Hat</th>
-              <th>Enerji Tipi</th>
-              <th>Tüketim (kWh)</th>
-              <th>Üretim (Adet)</th>
-              <th>Birim kWh</th>
-              <th>Hedef kWh/birim</th>
-              <th>Hedef Sapma %</th>
-              <th>CO₂ Faktörü</th>
-              <th>CO₂ (ton)</th>
-              <th>Durum</th>
-            </tr>
-          </thead>
-          <tbody id="detay-tbody">
-            <tr><td colspan="10" style="text-align:center;padding:20px;color:#90A4AE">Veri yükleniyor…</td></tr>
-          </tbody>
+          <thead><tr>
+            <th>Tarih</th><th>Hat</th><th>Enerji Tipi</th>
+            <th>Tüketim (kWh)</th><th>Üretim (Adet)</th>
+            <th>Birim kWh</th><th>Hedef kWh/birim</th>
+            <th>Hedef Sapma %</th><th>CO₂ Faktörü</th>
+            <th>CO₂ (ton)</th><th>Durum</th>
+          </tr></thead>
+          <tbody id="detay-tbody"></tbody>
         </table>
       </div>
     </div>
-
-  </div><!-- #icerik -->
-</div><!-- #uygulama -->
+  </div>
+</div>
 
 <script>
-/* ═══════════════════════════════════════════════════════
-   CONNECTOR – Yerel CSV dosyası
-   ═══════════════════════════════════════════════════════ */
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/1xB9uTcdJtLHyOrefS36OJU-HOGvdKEZ0U9FneN-5FwQ/export?format=csv&gid=938135206';
+// [tarih, hat, enerjiTipi, tuketim_kWh, uretim_adet, hedef_kWh_birim, co2_faktoru]
+const VERI = [
+["2025-01-01","Hat-1","Elektrik",3125.0,980,2.60,0.454],
+["2025-01-01","Hat-1","Doğalgaz",701.4,980,0.40,0.202],
+["2025-01-01","Hat-2","Elektrik",2861.2,790,3.00,0.458],
+["2025-01-01","Hat-2","Doğalgaz",929.6,790,0.50,0.202],
+["2025-01-01","Hat-3","Elektrik",2428.0,685,3.40,0.437],
+["2025-01-01","Hat-3","Doğalgaz",850.5,685,0.60,0.202],
+["2025-01-02","Hat-1","Elektrik",2787.8,989,2.60,0.436],
+["2025-01-02","Hat-1","Doğalgaz",786.6,989,0.40,0.202],
+["2025-01-02","Hat-2","Elektrik",2917.0,844,3.00,0.451],
+["2025-01-02","Hat-2","Doğalgaz",760.1,844,0.50,0.202],
+["2025-01-02","Hat-3","Elektrik",2307.3,661,3.40,0.468],
+["2025-01-02","Hat-3","Doğalgaz",1013.7,661,0.60,0.202],
+["2025-01-03","Hat-1","Elektrik",2653.9,969,2.60,0.448],
+["2025-01-03","Hat-1","Doğalgaz",794.6,969,0.40,0.202],
+["2025-01-03","Hat-2","Elektrik",2803.3,787,3.00,0.457],
+["2025-01-03","Hat-2","Doğalgaz",833.4,787,0.50,0.202],
+["2025-01-03","Hat-3","Elektrik",2475.1,655,3.40,0.461],
+["2025-01-03","Hat-3","Doğalgaz",1031.7,655,0.60,0.202],
+["2025-01-04","Hat-1","Elektrik",2522.2,820,2.60,0.438],
+["2025-01-04","Hat-1","Doğalgaz",681.6,820,0.40,0.202],
+["2025-01-04","Hat-2","Elektrik",2247.7,661,3.00,0.444],
+["2025-01-04","Hat-2","Doğalgaz",776.2,661,0.50,0.202],
+["2025-01-04","Hat-3","Elektrik",1902.5,473,3.40,0.469],
+["2025-01-04","Hat-3","Doğalgaz",677.6,473,0.60,0.202],
+["2025-01-05","Hat-1","Elektrik",1561.4,451,2.60,0.459],
+["2025-01-05","Hat-1","Doğalgaz",524.3,451,0.40,0.202],
+["2025-01-05","Hat-2","Elektrik",1576.1,443,3.00,0.455],
+["2025-01-05","Hat-2","Doğalgaz",533.0,443,0.50,0.202],
+["2025-01-05","Hat-3","Elektrik",1411.2,333,3.40,0.456],
+["2025-01-05","Hat-3","Doğalgaz",673.5,333,0.60,0.202],
+["2025-01-06","Hat-1","Elektrik",2896.5,939,2.60,0.452],
+["2025-01-06","Hat-1","Doğalgaz",868.8,939,0.40,0.202],
+["2025-01-06","Hat-2","Elektrik",2728.2,853,3.00,0.434],
+["2025-01-06","Hat-2","Doğalgaz",858.1,853,0.50,0.202],
+["2025-01-06","Hat-3","Elektrik",2523.5,631,3.40,0.440],
+["2025-01-06","Hat-3","Doğalgaz",902.9,631,0.60,0.202],
+["2025-01-07","Hat-1","Elektrik",2535.4,957,2.60,0.436],
+["2025-01-07","Hat-1","Doğalgaz",992.4,957,0.40,0.202],
+["2025-01-07","Hat-2","Elektrik",3160.3,868,3.00,0.437],
+["2025-01-07","Hat-2","Doğalgaz",966.3,868,0.50,0.202],
+["2025-01-07","Hat-3","Elektrik",2762.5,682,3.40,0.434],
+["2025-01-07","Hat-3","Doğalgaz",808.6,682,0.60,0.202],
+["2025-01-08","Hat-1","Elektrik",3135.8,1051,2.60,0.450],
+["2025-01-08","Hat-1","Doğalgaz",785.4,1051,0.40,0.202],
+["2025-01-08","Hat-2","Elektrik",2702.7,798,3.00,0.443],
+["2025-01-08","Hat-2","Doğalgaz",922.5,798,0.50,0.202],
+["2025-01-08","Hat-3","Elektrik",2752.2,636,3.40,0.440],
+["2025-01-08","Hat-3","Doğalgaz",781.0,636,0.60,0.202],
+["2025-01-09","Hat-1","Elektrik",2601.1,966,2.60,0.450],
+["2025-01-09","Hat-1","Doğalgaz",719.0,966,0.40,0.202],
+["2025-01-09","Hat-2","Elektrik",2809.8,906,3.00,0.450],
+["2025-01-09","Hat-2","Doğalgaz",913.9,906,0.50,0.202],
+["2025-01-09","Hat-3","Elektrik",2633.0,668,3.40,0.459],
+["2025-01-09","Hat-3","Doğalgaz",882.0,668,0.60,0.202],
+["2025-01-10","Hat-1","Elektrik",2894.7,1021,2.60,0.463],
+["2025-01-10","Hat-1","Doğalgaz",748.9,1021,0.40,0.202],
+["2025-01-10","Hat-2","Elektrik",2739.8,788,3.00,0.431],
+["2025-01-10","Hat-2","Doğalgaz",773.5,788,0.50,0.202],
+["2025-01-10","Hat-3","Elektrik",2447.2,665,3.40,0.445],
+["2025-01-10","Hat-3","Doğalgaz",811.2,665,0.60,0.202],
+["2025-01-11","Hat-1","Elektrik",2217.3,768,2.60,0.465],
+["2025-01-11","Hat-1","Doğalgaz",786.8,768,0.40,0.202],
+["2025-01-11","Hat-2","Elektrik",2526.3,734,3.00,0.440],
+["2025-01-11","Hat-2","Doğalgaz",893.1,734,0.50,0.202],
+["2025-01-11","Hat-3","Elektrik",2253.3,572,3.40,0.444],
+["2025-01-11","Hat-3","Doğalgaz",948.1,572,0.60,0.202],
+["2025-01-12","Hat-1","Elektrik",2032.5,627,2.60,0.433],
+["2025-01-12","Hat-1","Doğalgaz",796.9,627,0.40,0.202],
+["2025-01-12","Hat-2","Elektrik",1514.3,486,3.00,0.457],
+["2025-01-12","Hat-2","Doğalgaz",555.2,486,0.50,0.202],
+["2025-01-12","Hat-3","Elektrik",1590.2,364,3.40,0.439],
+["2025-01-12","Hat-3","Doğalgaz",611.3,364,0.60,0.202],
+["2025-01-13","Hat-1","Elektrik",2982.3,972,2.60,0.464],
+["2025-01-13","Hat-1","Doğalgaz",890.5,972,0.40,0.202],
+["2025-01-13","Hat-2","Elektrik",2572.6,795,3.00,0.440],
+["2025-01-13","Hat-2","Doğalgaz",891.2,795,0.50,0.202],
+["2025-01-13","Hat-3","Elektrik",2767.0,691,3.40,0.450],
+["2025-01-13","Hat-3","Doğalgaz",883.9,691,0.60,0.202],
+["2025-01-14","Hat-1","Elektrik",2838.2,951,2.60,0.431],
+["2025-01-14","Hat-1","Doğalgaz",762.4,951,0.40,0.202],
+["2025-01-14","Hat-2","Elektrik",3365.4,910,3.00,0.445],
+["2025-01-14","Hat-2","Doğalgaz",967.7,910,0.50,0.202],
+["2025-01-14","Hat-3","Elektrik",2776.7,643,3.40,0.464],
+["2025-01-14","Hat-3","Doğalgaz",783.2,643,0.60,0.202],
+["2025-01-15","Hat-1","Elektrik",2883.9,1056,2.60,0.452],
+["2025-01-15","Hat-1","Doğalgaz",1006.3,1056,0.40,0.202],
+["2025-01-15","Hat-2","Elektrik",2696.7,860,3.00,0.470],
+["2025-01-15","Hat-2","Doğalgaz",842.1,860,0.50,0.202],
+["2025-01-15","Hat-3","Elektrik",2791.7,689,3.40,0.458],
+["2025-01-15","Hat-3","Doğalgaz",791.5,689,0.60,0.202],
+["2025-01-16","Hat-1","Elektrik",3274.5,1049,2.60,0.467],
+["2025-01-16","Hat-1","Doğalgaz",882.2,1049,0.40,0.202],
+["2025-01-16","Hat-2","Elektrik",3097.0,891,3.00,0.462],
+["2025-01-16","Hat-2","Doğalgaz",918.8,891,0.50,0.202],
+["2025-01-16","Hat-3","Elektrik",2298.9,637,3.40,0.431],
+["2025-01-16","Hat-3","Doğalgaz",849.9,637,0.60,0.202],
+["2025-01-17","Hat-1","Elektrik",2763.6,966,2.60,0.431],
+["2025-01-17","Hat-1","Doğalgaz",847.7,966,0.40,0.202],
+["2025-01-17","Hat-2","Elektrik",2759.6,799,3.00,0.439],
+["2025-01-17","Hat-2","Doğalgaz",752.3,799,0.50,0.202],
+["2025-01-17","Hat-3","Elektrik",2362.2,603,3.40,0.455],
+["2025-01-17","Hat-3","Doğalgaz",992.2,603,0.60,0.202],
+["2025-01-18","Hat-1","Elektrik",2364.7,803,2.60,0.441],
+["2025-01-18","Hat-1","Doğalgaz",645.9,803,0.40,0.202],
+["2025-01-18","Hat-2","Elektrik",2316.4,599,3.00,0.458],
+["2025-01-18","Hat-2","Doğalgaz",649.4,599,0.50,0.202],
+["2025-01-18","Hat-3","Elektrik",1826.5,475,3.40,0.459],
+["2025-01-18","Hat-3","Doğalgaz",692.1,475,0.60,0.202],
+["2025-01-19","Hat-1","Elektrik",2040.1,641,2.60,0.454],
+["2025-01-19","Hat-1","Doğalgaz",629.9,641,0.40,0.202],
+["2025-01-19","Hat-2","Elektrik",1577.0,443,3.00,0.435],
+["2025-01-19","Hat-2","Doğalgaz",504.1,443,0.50,0.202],
+["2025-01-19","Hat-3","Elektrik",1701.9,404,3.40,0.434],
+["2025-01-19","Hat-3","Doğalgaz",689.8,404,0.60,0.202],
+["2025-01-20","Hat-1","Elektrik",2711.2,948,2.60,0.455],
+["2025-01-20","Hat-1","Doğalgaz",720.2,948,0.40,0.202],
+["2025-01-20","Hat-2","Elektrik",2862.5,833,3.00,0.464],
+["2025-01-20","Hat-2","Doğalgaz",798.9,833,0.50,0.202],
+["2025-01-20","Hat-3","Elektrik",2312.0,605,3.40,0.453],
+["2025-01-20","Hat-3","Doğalgaz",900.6,605,0.60,0.202],
+["2025-01-21","Hat-1","Elektrik",2919.1,982,2.60,0.452],
+["2025-01-21","Hat-1","Doğalgaz",879.1,982,0.40,0.202],
+["2025-01-21","Hat-2","Elektrik",3205.0,913,3.00,0.433],
+["2025-01-21","Hat-2","Doğalgaz",709.6,913,0.50,0.202],
+["2025-01-21","Hat-3","Elektrik",2348.4,608,3.40,0.443],
+["2025-01-21","Hat-3","Doğalgaz",724.9,608,0.60,0.202],
+["2025-01-22","Hat-1","Elektrik",2839.1,1050,2.60,0.458],
+["2025-01-22","Hat-1","Doğalgaz",1012.7,1050,0.40,0.202],
+["2025-01-22","Hat-2","Elektrik",3065.9,882,3.00,0.437],
+["2025-01-22","Hat-2","Doğalgaz",1032.8,882,0.50,0.202],
+["2025-01-22","Hat-3","Elektrik",2613.8,701,3.40,0.461],
+["2025-01-22","Hat-3","Doğalgaz",986.9,701,0.60,0.202],
+["2025-01-23","Hat-1","Elektrik",3064.3,1057,2.60,0.460],
+["2025-01-23","Hat-1","Doğalgaz",945.4,1057,0.40,0.202],
+["2025-01-23","Hat-2","Elektrik",2984.8,851,3.00,0.466],
+["2025-01-23","Hat-2","Doğalgaz",722.9,851,0.50,0.202],
+["2025-01-23","Hat-3","Elektrik",2421.4,692,3.40,0.468],
+["2025-01-23","Hat-3","Doğalgaz",963.1,692,0.60,0.202],
+["2025-01-24","Hat-1","Elektrik",2889.0,1021,2.60,0.443],
+["2025-01-24","Hat-1","Doğalgaz",969.0,1021,0.40,0.202],
+["2025-01-24","Hat-2","Elektrik",3046.3,890,3.00,0.450],
+["2025-01-24","Hat-2","Doğalgaz",852.1,890,0.50,0.202],
+["2025-01-24","Hat-3","Elektrik",2623.4,644,3.40,0.435],
+["2025-01-24","Hat-3","Doğalgaz",876.2,644,0.60,0.202],
+["2025-01-25","Hat-1","Elektrik",2181.2,824,2.60,0.458],
+["2025-01-25","Hat-1","Doğalgaz",835.1,824,0.40,0.202],
+["2025-01-25","Hat-2","Elektrik",2175.3,715,3.00,0.469],
+["2025-01-25","Hat-2","Doğalgaz",761.9,715,0.50,0.202],
+["2025-01-25","Hat-3","Elektrik",2463.4,561,3.40,0.460],
+["2025-01-25","Hat-3","Doğalgaz",655.5,561,0.60,0.202],
+["2025-01-26","Hat-1","Elektrik",1857.7,605,2.60,0.466],
+["2025-01-26","Hat-1","Doğalgaz",662.9,605,0.40,0.202],
+["2025-01-26","Hat-2","Elektrik",1329.1,384,3.00,0.435],
+["2025-01-26","Hat-2","Doğalgaz",665.9,384,0.50,0.202],
+["2025-01-26","Hat-3","Elektrik",1713.5,389,3.40,0.445],
+["2025-01-26","Hat-3","Doğalgaz",782.3,389,0.60,0.202],
+["2025-01-27","Hat-1","Elektrik",2918.0,956,2.60,0.469],
+["2025-01-27","Hat-1","Doğalgaz",898.2,956,0.40,0.202],
+["2025-01-27","Hat-2","Elektrik",3030.6,854,3.00,0.452],
+["2025-01-27","Hat-2","Doğalgaz",964.7,854,0.50,0.202],
+["2025-01-27","Hat-3","Elektrik",2628.4,663,3.40,0.455],
+["2025-01-27","Hat-3","Doğalgaz",989.8,663,0.60,0.202],
+["2025-01-28","Hat-1","Elektrik",2692.9,927,2.60,0.466],
+["2025-01-28","Hat-1","Doğalgaz",860.4,927,0.40,0.202],
+["2025-01-28","Hat-2","Elektrik",2598.5,820,3.00,0.444],
+["2025-01-28","Hat-2","Doğalgaz",755.6,820,0.50,0.202],
+["2025-01-28","Hat-3","Elektrik",2944.9,699,3.40,0.451],
+["2025-01-28","Hat-3","Doğalgaz",946.1,699,0.60,0.202],
+["2025-01-29","Hat-1","Elektrik",2883.0,1030,2.60,0.463],
+["2025-01-29","Hat-1","Doğalgaz",1004.9,1030,0.40,0.202],
+["2025-01-29","Hat-2","Elektrik",2941.0,865,3.00,0.465],
+["2025-01-29","Hat-2","Doğalgaz",682.4,865,0.50,0.202],
+["2025-01-29","Hat-3","Elektrik",2691.1,637,3.40,0.436],
+["2025-01-29","Hat-3","Doğalgaz",818.6,637,0.60,0.202],
+["2025-01-30","Hat-1","Elektrik",3359.8,1075,2.60,0.449],
+["2025-01-30","Hat-1","Doğalgaz",810.0,1075,0.40,0.202],
+["2025-01-30","Hat-2","Elektrik",2902.9,790,3.00,0.470],
+["2025-01-30","Hat-2","Doğalgaz",940.2,790,0.50,0.202],
+["2025-01-30","Hat-3","Elektrik",2876.3,678,3.40,0.440],
+["2025-01-30","Hat-3","Doğalgaz",748.7,678,0.60,0.202],
+["2025-01-31","Hat-1","Elektrik",3100.6,1073,2.60,0.457],
+["2025-01-31","Hat-1","Doğalgaz",865.1,1073,0.40,0.202],
+["2025-01-31","Hat-2","Elektrik",2774.9,797,3.00,0.461],
+["2025-01-31","Hat-2","Doğalgaz",966.9,797,0.50,0.202],
+["2025-01-31","Hat-3","Elektrik",2624.0,655,3.40,0.446],
+["2025-01-31","Hat-3","Doğalgaz",661.1,655,0.60,0.202]
+];
 
-/* ═══════════════════════════════════════════════════════
-   YARDIMCI FONKSİYONLAR
-   ═══════════════════════════════════════════════════════ */
-function parseNum(s) {
-  if (!s && s !== 0) return NaN;
-  const str = String(s).trim();
-  if (!str || str === '-') return NaN;
-  const hasPeriod = str.includes('.');
-  const hasComma  = str.includes(',');
-  if (hasPeriod && hasComma) {
-    return str.indexOf('.') < str.indexOf(',')
-      ? parseFloat(str.replace(/\./g, '').replace(',', '.'))  // "1.234,56" TR
-      : parseFloat(str.replace(/,/g, ''));                     // "1,234.56" EN
-  }
-  if (hasComma && !hasPeriod) return parseFloat(str.replace(',', '.'));  // "2,60"
-  if (hasPeriod && !hasComma) {
-    const parts = str.replace(/^-/, '').split('.');
-    // "1.051" → 3 hane sonra, başı 0 değil → TR binlik ayraç → 1051
-    if (parts.length === 2 && parts[1].length === 3 && parts[0] !== '0')
-      return parseFloat(str.replace(/\./g, ''));
-    return parseFloat(str); // "0.454" veya "2.60"
-  }
-  return parseFloat(str);
-}
-
-function fmtSayi(n, decimal = 0) {
+function fmtSayi(n, d=0) {
   if (isNaN(n) || n === null) return '—';
-  return n.toLocaleString('tr-TR', { minimumFractionDigits: decimal, maximumFractionDigits: decimal });
+  return n.toLocaleString('tr-TR', {minimumFractionDigits:d, maximumFractionDigits:d});
 }
-
 function fmtTarih(d) {
-  if (!d) return '—';
-  if (d instanceof Date && !isNaN(d)) {
-    const g = String(d.getDate()).padStart(2,'0');
-    const a = String(d.getMonth()+1).padStart(2,'0');
-    return `${g}.${a}.${d.getFullYear()}`;
-  }
-  return String(d);
+  if (!d || !(d instanceof Date) || isNaN(d)) return '—';
+  return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();
+}
+function durumHesapla(s) {
+  if (isNaN(s)) return {etiket:'—',sinif:''};
+  if (s<=0) return {etiket:'▼ Hedef Altı',sinif:'iyi'};
+  if (s<=5) return {etiket:'▶ Sınırda',sinif:'normal'};
+  return {etiket:'▲ Hedef Üstü',sinif:'kotu'};
 }
 
-function parseTarih(s) {
-  if (!s) return null;
-  // GG.AA.YYYY veya YYYY-MM-DD veya MM/DD/YYYY
-  let m;
-  if ((m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/))) return new Date(+m[3], +m[2]-1, +m[1]);
-  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/)))        return new Date(+m[1], +m[2]-1, +m[3]);
-  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)))  return new Date(+m[3], +m[1]-1, +m[2]);
-  const d = new Date(s);
-  return isNaN(d) ? null : d;
-}
-
-function durumHesapla(sapma) {
-  if (isNaN(sapma)) return { etiket: '—', sinif: '' };
-  if (sapma <= 0)   return { etiket: '▼ Hedef Altı', sinif: 'iyi' };
-  if (sapma <= 5)   return { etiket: '▶ Sınırda',    sinif: 'normal' };
-  return              { etiket: '▲ Hedef Üstü',     sinif: 'kotu' };
-}
-
-/* ═══════════════════════════════════════════════════════
-   CSV PARSE
-   ═══════════════════════════════════════════════════════ */
-function csvSatirParse(satir, ayrac = ';') {
-  const sonuc = [];
-  let alan = '', tirnak = false;
-  for (let i = 0; i < satir.length; i++) {
-    const c = satir[i];
-    if (c === '"') { tirnak = !tirnak; continue; }
-    if (c === ayrac && !tirnak) { sonuc.push(alan.trim()); alan = ''; continue; }
-    alan += c;
-  }
-  sonuc.push(alan.trim());
-  return sonuc;
-}
-
-function ayracTespit(ilkSatir) {
-  const noktaliVirgul = (ilkSatir.match(/;/g) || []).length;
-  const virgul        = (ilkSatir.match(/,/g) || []).length;
-  return noktaliVirgul >= virgul ? ';' : ',';
-}
-
-function csvParse(metin) {
-  const satirlar = metin.split(/\r?\n/).filter(s => s.trim());
-  if (satirlar.length < 2) return [];
-  const ayrac = ayracTespit(satirlar[0]);
-  const basliklar = csvSatirParse(satirlar[0], ayrac).map(b => b.toLowerCase().trim());
-  return satirlar.slice(1).map(s => {
-    const degerler = csvSatirParse(s, ayrac);
-    const obj = {};
-    basliklar.forEach((b, i) => { obj[b] = degerler[i] || ''; });
-    return obj;
-  });
-}
-
-/* ═══════════════════════════════════════════════════════
-   KOLON TAHMİNİ
-   ═══════════════════════════════════════════════════════ */
-function kolonBul(basliklar, adaylar) {
-  for (const aday of adaylar) {
-    const b = basliklar.find(b => b.includes(aday.toLowerCase()));
-    if (b) return b;
-  }
-  return null;
-}
-
-/* ═══════════════════════════════════════════════════════
-   GRAFİK ÖRNEKLER
-   ═══════════════════════════════════════════════════════ */
-let trendGrafik   = null;
-let kirilimGrafik = null;
-
-function grafikleriTemizle() {
-  if (trendGrafik)   { trendGrafik.destroy();   trendGrafik   = null; }
-  if (kirilimGrafik) { kirilimGrafik.destroy(); kirilimGrafik = null; }
-}
-
-/* ═══════════════════════════════════════════════════════
-   ANA VERİ İŞLEME
-   ═══════════════════════════════════════════════════════ */
 let tumVeri = [];
-let kolonlar = {};
+let trendGrafik = null, kirilimGrafik = null;
 
-function veriIsle(satirlar) {
-  if (!satirlar.length) return [];
-
-  const basliklar = Object.keys(satirlar[0]);
-
-  // Kolon tespiti
-  kolonlar = {
-    tarih      : kolonBul(basliklar, ['tarih','date']),
-    hat        : kolonBul(basliklar, ['hat']),
-    enerjitipi : kolonBul(basliklar, ['enerji tipi','enerjitipi','tip','type']),
-    tuketim    : kolonBul(basliklar, ['tüketim (kwh)','tuketim (kwh)','tüketim','tuketim','kwh']),
-    uretim     : kolonBul(basliklar, ['üretim adedi','uretim adedi','üretim','uretim','adet']),
-    hedef      : kolonBul(basliklar, ['hedef kwh/birim','hedef kwh','hedef']),
-    co2faktör  : kolonBul(basliklar, ['co2 faktörü','co2 faktoru','co2']),
-  };
-
-  return satirlar.map(s => {
-    const tuketim    = parseNum(s[kolonlar.tuketim]);
-    const uretim     = parseNum(s[kolonlar.uretim]);
-    const hedef      = parseNum(s[kolonlar.hedef]);
-    const co2f       = parseNum(s[kolonlar.co2faktör]) || 0.415;
-    const enerjiTipi = (s[kolonlar.enerjitipi] || '').trim();
-    const birimKwh   = (uretim && uretim > 0) ? tuketim / uretim : NaN;
-    const sapma      = (!isNaN(birimKwh) && hedef > 0) ? ((birimKwh - hedef) / hedef) * 100 : NaN;
-    const co2        = (!isNaN(tuketim)) ? (tuketim * co2f) / 1000 : NaN;
-
-    return {
-      tarihHam  : s[kolonlar.tarih] || '',
-      tarih     : parseTarih(s[kolonlar.tarih]),
-      hat       : (s[kolonlar.hat] || 'Bilinmeyen').trim(),
-      enerjiTipi,
-      tuketim,
-      uretim,
-      hedef,
-      co2f,
-      birimKwh,
-      sapma,
-      co2,
-      ham       : s,
-    };
-  }).filter(r => r.tarih && !isNaN(r.tuketim));
-}
-
-/* ═══════════════════════════════════════════════════════
-   FİLTRELEME
-   ═══════════════════════════════════════════════════════ */
-function filtreliVeri() {
-  const hat  = document.getElementById('hat-filtre').value;
-  const tip  = document.getElementById('tip-filtre').value;
-  const bas  = document.getElementById('baslangic-filtre').value;
-  const bit  = document.getElementById('bitis-filtre').value;
-  const sira = document.getElementById('siralama').value;
-
-  let veri = [...tumVeri];
-
-  if (hat)  veri = veri.filter(r => r.hat === hat);
-  if (tip)  veri = veri.filter(r => r.enerjiTipi === tip);
-  if (bas)  { const d = new Date(bas); veri = veri.filter(r => r.tarih >= d); }
-  if (bit)  { const d = new Date(bit); d.setHours(23,59,59); veri = veri.filter(r => r.tarih <= d); }
-
-  if (sira === 'tarih')   veri.sort((a,b) => a.tarih - b.tarih);
-  if (sira === 'sapma')   veri.sort((a,b) => b.sapma - a.sapma);
-  if (sira === 'tuketim') veri.sort((a,b) => b.tuketim - a.tuketim);
-
-  return veri;
-}
-
-/* ═══════════════════════════════════════════════════════
-   KPI GÜNCELLE
-   ═══════════════════════════════════════════════════════ */
-function uretimTekillesir(rows) {
-  // Aynı hat + tarih kombinasyonu birden fazla enerji tipi nedeniyle tekrarlanabilir.
-  // Her hat+tarih için üretimi yalnızca bir kez say.
-  const map = {};
-  rows.forEach(r => {
-    const k = r.hat + '||' + (r.tarih ? r.tarih.getTime() : r.tarihHam);
-    if (!(k in map)) map[k] = r.uretim || 0;
+function veriHazirla() {
+  tumVeri = VERI.map(r => {
+    const tarih = new Date(r[0]);
+    const tuketim = r[3], uretim = r[4], hedef = r[5], co2f = r[6];
+    const birimKwh = uretim > 0 ? tuketim / uretim : NaN;
+    const sapma = (!isNaN(birimKwh) && hedef > 0) ? (birimKwh - hedef) / hedef * 100 : NaN;
+    const co2 = tuketim * co2f / 1000;
+    return { tarih, hat: r[1], enerjiTipi: r[2], tuketim, uretim, hedef, co2f, birimKwh, sapma, co2 };
   });
-  return Object.values(map).reduce((t, v) => t + v, 0);
+}
+
+function filtreliVeri() {
+  const hat = document.getElementById('hat-filtre').value;
+  const tip = document.getElementById('tip-filtre').value;
+  const bas = document.getElementById('baslangic-filtre').value;
+  const bit = document.getElementById('bitis-filtre').value;
+  const sira = document.getElementById('siralama').value;
+  let v = [...tumVeri];
+  if (hat) v = v.filter(r => r.hat === hat);
+  if (tip) v = v.filter(r => r.enerjiTipi === tip);
+  if (bas) { const d = new Date(bas); v = v.filter(r => r.tarih >= d); }
+  if (bit) { const d = new Date(bit); d.setHours(23,59,59); v = v.filter(r => r.tarih <= d); }
+  if (sira==='tarih')   v.sort((a,b) => a.tarih - b.tarih);
+  if (sira==='sapma')   v.sort((a,b) => b.sapma - a.sapma);
+  if (sira==='tuketim') v.sort((a,b) => b.tuketim - a.tuketim);
+  return v;
+}
+
+function uretimTekillesir(rows) {
+  const m = {};
+  rows.forEach(r => { const k = r.hat+'|'+r.tarih.getTime(); if (!(k in m)) m[k] = r.uretim; });
+  return Object.values(m).reduce((t,v) => t+v, 0);
 }
 
 function kpiGuncelle(veri) {
-  const topTuketim = veri.reduce((t, r) => t + (r.tuketim || 0), 0);
-  const topCo2     = veri.reduce((t, r) => t + (r.co2     || 0), 0);
+  const topTuketim = veri.reduce((t,r) => t + r.tuketim, 0);
+  const topCo2     = veri.reduce((t,r) => t + r.co2, 0);
+  const topUretim  = uretimTekillesir(veri);
+  const birimKwh   = topUretim > 0 ? topTuketim / topUretim : NaN;
 
-  // Üretimi tekilleştir: aynı hat+tarih Elektrik+Doğalgaz satırlarında çift sayılmasın
-  const topUretim = uretimTekillesir(veri);
-  const birimKwh  = topUretim > 0 ? topTuketim / topUretim : NaN;
-
-  // Hedef Sapma: her enerji tipi için ayrı hesapla, sonra tüketim ağırlıklı birleştir
-  const tipler = [...new Set(veri.map(r => r.enerjiTipi).filter(Boolean))];
+  const tipler = [...new Set(veri.map(r=>r.enerjiTipi))];
   let ortSapma = NaN;
-  if (tipler.length > 0) {
-    const tipSonuclari = tipler.map(tip => {
-      const rows = veri.filter(r => r.enerjiTipi === tip);
-      const tipTuketim = rows.reduce((t, r) => t + (r.tuketim || 0), 0);
-      const tipUretim  = uretimTekillesir(rows);
-      const tipBirimKwh = tipUretim > 0 ? tipTuketim / tipUretim : NaN;
-      const gecerli = rows.filter(r => r.hedef > 0 && r.uretim > 0);
-      const hedefAdet = gecerli.reduce((t, r) => t + r.hedef * r.uretim, 0);
-      const uretimGecerli = gecerli.reduce((t, r) => t + r.uretim, 0);
-      const ortHedef = uretimGecerli > 0 ? hedefAdet / uretimGecerli : NaN;
-      const sapma = (!isNaN(tipBirimKwh) && ortHedef > 0)
-        ? (tipBirimKwh - ortHedef) / ortHedef * 100 : NaN;
-      return { sapma, tuketim: tipTuketim };
-    }).filter(x => !isNaN(x.sapma));
-
-    if (tipSonuclari.length > 0) {
-      const topTip = tipSonuclari.reduce((t, x) => t + x.tuketim, 0);
-      ortSapma = topTip > 0
-        ? tipSonuclari.reduce((t, x) => t + x.sapma * x.tuketim / topTip, 0)
-        : tipSonuclari.reduce((t, x) => t + x.sapma, 0) / tipSonuclari.length;
-    }
+  const tipSon = tipler.map(tip => {
+    const rows = veri.filter(r => r.enerjiTipi === tip);
+    const tuk = rows.reduce((t,r) => t+r.tuketim, 0);
+    const ure = uretimTekillesir(rows);
+    const bkwh = ure > 0 ? tuk / ure : NaN;
+    const gec = rows.filter(r => r.hedef > 0 && r.uretim > 0);
+    const hA = gec.reduce((t,r) => t + r.hedef * r.uretim, 0);
+    const uG = gec.reduce((t,r) => t + r.uretim, 0);
+    const oH = uG > 0 ? hA / uG : NaN;
+    const sap = (!isNaN(bkwh) && oH > 0) ? (bkwh - oH) / oH * 100 : NaN;
+    return { sapma: sap, tuketim: tuk };
+  }).filter(x => !isNaN(x.sapma));
+  if (tipSon.length > 0) {
+    const tT = tipSon.reduce((t,x) => t+x.tuketim, 0);
+    ortSapma = tT > 0 ? tipSon.reduce((t,x) => t + x.sapma * x.tuketim / tT, 0)
+      : tipSon.reduce((t,x) => t+x.sapma, 0) / tipSon.length;
   }
 
-  // KPI kartları
-  setKpi('kpi-toplam-tuketim', fmtSayi(topTuketim, 0) + ' kWh', '', '');
-  setKpi('kpi-toplam-uretim',  fmtSayi(topUretim,  0) + ' Adet', '', '');
-  setKpi('kpi-birim-kwh',      fmtSayi(birimKwh, 2) + ' kWh/Adet', '', '');
+  setKpi('kpi-toplam-tuketim', fmtSayi(topTuketim,0)+' kWh','','');
+  setKpi('kpi-toplam-uretim',  fmtSayi(topUretim,0)+' Adet','','');
+  setKpi('kpi-birim-kwh',      fmtSayi(birimKwh,2)+' kWh/Adet','','');
 
-  const sapmaKart = document.getElementById('kpi-hedef-sapma');
-  sapmaKart.classList.remove('mavi','yesil','kirmizi','sari');
+  const sk = document.getElementById('kpi-hedef-sapma');
+  sk.classList.remove('mavi','yesil','kirmizi','sari');
   if (!isNaN(ortSapma)) {
-    const poz = ortSapma > 0;
-    sapmaKart.classList.add(poz ? 'kirmizi' : 'yesil');
-    const isaretli = (poz ? '+' : '') + fmtSayi(ortSapma, 1) + ' %';
-    setKpi('kpi-hedef-sapma', isaretli, poz ? 'Hedef aşılıyor' : 'Hedefin altında', poz ? 'kotu' : 'iyi');
+    const p = ortSapma > 0;
+    sk.classList.add(p ? 'kirmizi' : 'yesil');
+    setKpi('kpi-hedef-sapma', (p?'+':'')+fmtSayi(ortSapma,1)+' %', p?'Hedef aşılıyor':'Hedefin altında', p?'kotu':'iyi');
   } else {
     setKpi('kpi-hedef-sapma', '—', 'Hedef bilgisi yok', '');
   }
-
-  setKpi('kpi-co2', fmtSayi(topCo2, 2) + ' ton', 'CO₂ eşdeğeri', '');
+  setKpi('kpi-co2', fmtSayi(topCo2,2)+' ton', 'CO₂ eşdeğeri', '');
 }
 
 function setKpi(id, deger, alt, badge) {
   const el = document.getElementById(id);
   if (!el) return;
   el.querySelector('.kpi-deger').textContent = deger;
-  if (alt !== undefined)  el.querySelector('.kpi-alt').textContent = alt;
-  // badge
-  let badgeEl = el.querySelector('.kpi-badge');
+  if (alt !== undefined) el.querySelector('.kpi-alt').textContent = alt;
+  let b = el.querySelector('.kpi-badge');
   if (badge) {
-    if (!badgeEl) { badgeEl = document.createElement('div'); badgeEl.className = 'kpi-badge'; el.appendChild(badgeEl); }
-    badgeEl.className = `kpi-badge badge-${badge}`;
-  } else if (badgeEl) {
-    badgeEl.remove();
-  }
+    if (!b) { b = document.createElement('div'); b.className='kpi-badge'; el.appendChild(b); }
+    b.className = `kpi-badge badge-${badge}`;
+  } else if (b) b.remove();
 }
 
-/* ═══════════════════════════════════════════════════════
-   E2: TREND GRAFİĞİ
-   ═══════════════════════════════════════════════════════ */
-function trendGrafiginiGuncelle(veri) {
-  // Günlük toplamlar; üretim hat bazında tekilleştirilir
+function trendGuncelle(veri) {
   const gunluk = {};
   veri.forEach(r => {
     const k = fmtTarih(r.tarih);
-    if (!gunluk[k]) gunluk[k] = { tuketim: 0, uretimMap: {}, hedefToplam: 0, hedefN: 0 };
-    gunluk[k].tuketim += r.tuketim || 0;
-    const hatK = r.hat + '||' + (r.tarih ? r.tarih.getTime() : '');
-    if (!(hatK in gunluk[k].uretimMap)) gunluk[k].uretimMap[hatK] = r.uretim || 0;
-    if (r.hedef > 0) { gunluk[k].hedefToplam += r.hedef; gunluk[k].hedefN++; }
+    if (!gunluk[k]) gunluk[k] = { tuketim:0, uretimMap:{}, hedefTop:0, hedefN:0 };
+    gunluk[k].tuketim += r.tuketim;
+    const hk = r.hat+'|'+r.tarih.getTime();
+    if (!(hk in gunluk[k].uretimMap)) gunluk[k].uretimMap[hk] = r.uretim;
+    if (r.hedef > 0) { gunluk[k].hedefTop += r.hedef; gunluk[k].hedefN++; }
   });
-
   const etiketler = Object.keys(gunluk).sort((a,b) => {
-    const da = parseTarih(a), db = parseTarih(b);
-    return da - db;
+    const [da,ma,ya] = a.split('.').map(Number), [db,mb,yb] = b.split('.').map(Number);
+    return new Date(ya,ma-1,da) - new Date(yb,mb-1,db);
   });
-
-  const birimKwhDizi = etiketler.map(k => {
+  const birimD = etiketler.map(k => {
     const g = gunluk[k];
-    const uretim = Object.values(g.uretimMap).reduce((t, v) => t + v, 0);
-    return uretim > 0 ? +(g.tuketim / uretim).toFixed(3) : null;
+    const u = Object.values(g.uretimMap).reduce((t,v)=>t+v,0);
+    return u>0 ? +(g.tuketim/u).toFixed(3) : null;
   });
-  const hedefDizi = etiketler.map(k => {
+  const hedefD = etiketler.map(k => {
     const g = gunluk[k];
-    return g.hedefN > 0 ? +(g.hedefToplam / g.hedefN).toFixed(3) : null;
+    return g.hedefN>0 ? +(g.hedefTop/g.hedefN).toFixed(3) : null;
   });
-
   const ctx = document.getElementById('trend-grafik').getContext('2d');
   if (trendGrafik) trendGrafik.destroy();
-
   trendGrafik = new Chart(ctx, {
-    type: 'line',
+    type:'line',
     data: {
       labels: etiketler,
       datasets: [
-        {
-          label: 'Gerçekleşen (kWh/Adet)',
-          data: birimKwhDizi,
-          borderColor: '#1565C0',
-          backgroundColor: 'rgba(21,101,192,.08)',
-          borderWidth: 2,
-          pointRadius: 3,
-          tension: .3,
-          fill: true,
-        },
-        {
-          label: 'Hedef (kWh/Adet)',
-          data: hedefDizi,
-          borderColor: '#F9A825',
-          borderWidth: 2,
-          borderDash: [5,4],
-          pointRadius: 0,
-          tension: 0,
-          fill: false,
-        }
+        { label:'Gerçekleşen (kWh/Adet)', data:birimD, borderColor:'#1565C0', backgroundColor:'rgba(21,101,192,.08)', borderWidth:2, pointRadius:3, tension:.3, fill:true },
+        { label:'Hedef (kWh/Adet)', data:hedefD, borderColor:'#F9A825', borderWidth:2, borderDash:[5,4], pointRadius:0, tension:0, fill:false }
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 14 } },
-        tooltip: {
-          callbacks: {
-            label: ctx => `${ctx.dataset.label}: ${fmtSayi(ctx.parsed.y, 3)}`
-          }
-        }
-      },
-      scales: {
-        x: { ticks: { font: { size: 10 }, maxTicksLimit: 10 }, grid: { color: '#eceff1' } },
-        y: { ticks: { font: { size: 10 } }, grid: { color: '#eceff1' },
-             title: { display: true, text: 'kWh / Adet', font: { size: 10 } } }
-      }
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{ legend:{position:'top',labels:{font:{size:11},boxWidth:14}}, tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtSayi(c.parsed.y,3)}`}} },
+      scales:{ x:{ticks:{font:{size:10},maxTicksLimit:10},grid:{color:'#eceff1'}}, y:{ticks:{font:{size:10}},grid:{color:'#eceff1'},title:{display:true,text:'kWh / Adet',font:{size:10}}} }
     }
   });
 }
 
-/* ═══════════════════════════════════════════════════════
-   E3: KIRILIM / PARETO GRAFİĞİ
-   ═══════════════════════════════════════════════════════ */
-function kirilimGrafiginiGuncelle(veri) {
+function kirilimGuncelle(veri) {
   const hatlar = {};
-  veri.forEach(r => {
-    if (!hatlar[r.hat]) hatlar[r.hat] = 0;
-    hatlar[r.hat] += r.tuketim || 0;
-  });
-
-  const siralı = Object.entries(hatlar).sort((a,b) => b[1]-a[1]);
-  const etiketler = siralı.map(([h]) => h);
-  const degerler  = siralı.map(([,v]) => +v.toFixed(1));
-
-  // Pareto kümülatif %
-  const toplam = degerler.reduce((t,v) => t+v, 0);
-  let kumülatif = 0;
-  const kumulatifYüzde = degerler.map(v => {
-    kumülatif += v;
-    return toplam > 0 ? +(kumülatif / toplam * 100).toFixed(1) : 0;
-  });
-
+  veri.forEach(r => { hatlar[r.hat] = (hatlar[r.hat]||0) + r.tuketim; });
+  const s = Object.entries(hatlar).sort((a,b)=>b[1]-a[1]);
+  const et = s.map(([h])=>h), dg = s.map(([,v])=>+v.toFixed(1));
+  const top = dg.reduce((t,v)=>t+v,0);
+  let kum=0;
+  const ky = dg.map(v => { kum+=v; return top>0 ? +(kum/top*100).toFixed(1) : 0; });
   const ctx = document.getElementById('kirilim-grafik').getContext('2d');
   if (kirilimGrafik) kirilimGrafik.destroy();
-
   kirilimGrafik = new Chart(ctx, {
     data: {
-      labels: etiketler,
+      labels: et,
       datasets: [
-        {
-          type: 'bar',
-          label: 'Tüketim (kWh)',
-          data: degerler,
-          backgroundColor: '#1E88E5',
-          yAxisID: 'y',
-          order: 2,
-        },
-        {
-          type: 'line',
-          label: 'Kümülatif %',
-          data: kumulatifYüzde,
-          borderColor: '#C62828',
-          borderWidth: 2,
-          pointRadius: 3,
-          yAxisID: 'y2',
-          order: 1,
-          fill: false,
-        }
+        {type:'bar',label:'Tüketim (kWh)',data:dg,backgroundColor:'#1E88E5',yAxisID:'y',order:2},
+        {type:'line',label:'Kümülatif %',data:ky,borderColor:'#C62828',borderWidth:2,pointRadius:3,yAxisID:'y2',order:1,fill:false}
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 14 } },
-        tooltip: {
-          callbacks: {
-            label: ctx => ctx.dataset.label.includes('%')
-              ? `${ctx.dataset.label}: %${fmtSayi(ctx.parsed.y, 1)}`
-              : `${ctx.dataset.label}: ${fmtSayi(ctx.parsed.y, 0)} kWh`
-          }
-        }
-      },
-      scales: {
-        x: { ticks: { font: { size: 10 } }, grid: { color: '#eceff1' } },
-        y: { ticks: { font: { size: 10 } }, grid: { color: '#eceff1' },
-             title: { display: true, text: 'kWh', font: { size: 10 } } },
-        y2: {
-          position: 'right', min: 0, max: 100,
-          ticks: { font: { size: 10 }, callback: v => `%${v}` },
-          grid: { drawOnChartArea: false },
-          title: { display: true, text: 'Kümülatif %', font: { size: 10 } }
-        }
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{ legend:{position:'top',labels:{font:{size:11},boxWidth:14}}, tooltip:{callbacks:{label:c=>c.dataset.label.includes('%')?`${c.dataset.label}: %${fmtSayi(c.parsed.y,1)}`:`${c.dataset.label}: ${fmtSayi(c.parsed.y,0)} kWh`}} },
+      scales:{
+        x:{ticks:{font:{size:10}},grid:{color:'#eceff1'}},
+        y:{ticks:{font:{size:10}},grid:{color:'#eceff1'},title:{display:true,text:'kWh',font:{size:10}}},
+        y2:{position:'right',min:0,max:100,ticks:{font:{size:10},callback:v=>`%${v}`},grid:{drawOnChartArea:false},title:{display:true,text:'Kümülatif %',font:{size:10}}}
       }
     }
   });
 }
 
-/* ═══════════════════════════════════════════════════════
-   E4: DETAY TABLO
-   ═══════════════════════════════════════════════════════ */
 function tabloGuncelle(veri) {
-  const tbody = document.getElementById('detay-tbody');
-  if (!veri.length) {
-    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:20px;color:#90A4AE">
-      📋 Gösterilecek kayıt bulunamadı. Filtre ayarlarını kontrol edin.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = veri.map(r => {
-    const durum = durumHesapla(r.sapma);
-    const sapmaStr = !isNaN(r.sapma) ? (r.sapma > 0 ? '+' : '') + fmtSayi(r.sapma, 1) + ' %' : '—';
-    const renk = durum.sinif ? `pill-${durum.sinif}` : '';
+  const tb = document.getElementById('detay-tbody');
+  if (!veri.length) { tb.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:20px;color:#90A4AE">📋 Gösterilecek kayıt bulunamadı.</td></tr>`; return; }
+  tb.innerHTML = veri.map(r => {
+    const d = durumHesapla(r.sapma);
+    const ss = !isNaN(r.sapma) ? (r.sapma>0?'+':'')+fmtSayi(r.sapma,1)+' %' : '—';
     return `<tr>
-      <td>${fmtTarih(r.tarih)}</td>
-      <td>${r.hat}</td>
-      <td>${r.enerjiTipi || '—'}</td>
-      <td>${fmtSayi(r.tuketim, 0)}</td>
-      <td>${fmtSayi(r.uretim,  0)}</td>
-      <td>${fmtSayi(r.birimKwh, 3)}</td>
-      <td>${fmtSayi(r.hedef,   3)}</td>
-      <td style="font-weight:600;color:${r.sapma>5?'#C62828':r.sapma<=0?'#2E7D32':'#F57F17'}">${sapmaStr}</td>
-      <td>${fmtSayi(r.co2f,    3)}</td>
-      <td>${fmtSayi(r.co2,     3)}</td>
-      <td><span class="durum-pill ${renk}">${durum.etiket || '—'}</span></td>
+      <td>${fmtTarih(r.tarih)}</td><td>${r.hat}</td><td>${r.enerjiTipi}</td>
+      <td>${fmtSayi(r.tuketim,0)}</td><td>${fmtSayi(r.uretim,0)}</td>
+      <td>${fmtSayi(r.birimKwh,3)}</td><td>${fmtSayi(r.hedef,3)}</td>
+      <td style="font-weight:600;color:${r.sapma>5?'#C62828':r.sapma<=0?'#2E7D32':'#F57F17'}">${ss}</td>
+      <td>${fmtSayi(r.co2f,3)}</td><td>${fmtSayi(r.co2,3)}</td>
+      <td><span class="durum-pill ${d.sinif?'pill-'+d.sinif:''}">${d.etiket}</span></td>
     </tr>`;
   }).join('');
 }
 
-/* ═══════════════════════════════════════════════════════
-   FİLTRE DOLDURUCU
-   ═══════════════════════════════════════════════════════ */
 function filtreDoldur() {
-  const hatlar = [...new Set(tumVeri.map(r => r.hat))].sort();
-  const hatSec = document.getElementById('hat-filtre');
-  hatSec.innerHTML = '<option value="">Tümü</option>' +
-    hatlar.map(h => `<option value="${h}">${h}</option>`).join('');
-
-  const tipler = [...new Set(tumVeri.map(r => r.enerjiTipi).filter(Boolean))].sort();
-  const tipSec = document.getElementById('tip-filtre');
-  tipSec.innerHTML = '<option value="">Tümü</option>' +
-    tipler.map(t => `<option value="${t}">${t}</option>`).join('');
-
-  if (tumVeri.length) {
-    const tarihler = tumVeri.map(r => r.tarih).filter(Boolean).sort((a,b)=>a-b);
-    const min = tarihler[0];
-    const max = tarihler[tarihler.length-1];
-    if (min) document.getElementById('baslangic-filtre').value = min.toISOString().slice(0,10);
-    if (max) document.getElementById('bitis-filtre').value     = max.toISOString().slice(0,10);
-  }
+  const hatlar = [...new Set(tumVeri.map(r=>r.hat))].sort();
+  document.getElementById('hat-filtre').innerHTML = '<option value="">Tümü</option>'+hatlar.map(h=>`<option value="${h}">${h}</option>`).join('');
+  const tipler = [...new Set(tumVeri.map(r=>r.enerjiTipi))].sort();
+  document.getElementById('tip-filtre').innerHTML = '<option value="">Tümü</option>'+tipler.map(t=>`<option value="${t}">${t}</option>`).join('');
+  const tarihler = tumVeri.map(r=>r.tarih).sort((a,b)=>a-b);
+  if (tarihler[0])   document.getElementById('baslangic-filtre').value = tarihler[0].toISOString().slice(0,10);
+  if (tarihler.at(-1)) document.getElementById('bitis-filtre').value = tarihler.at(-1).toISOString().slice(0,10);
 }
 
-/* ═══════════════════════════════════════════════════════
-   GENEL GÜNCELLE
-   ═══════════════════════════════════════════════════════ */
 function panelleriGuncelle() {
-  const veri = filtreliVeri();
-  kpiGuncelle(veri);
-  trendGrafiginiGuncelle(veri);
-  kirilimGrafiginiGuncelle(veri);
-  tabloGuncelle(veri);
+  const v = filtreliVeri();
+  kpiGuncelle(v); trendGuncelle(v); kirilimGuncelle(v); tabloGuncelle(v);
 }
 
-/* ═══════════════════════════════════════════════════════
-   VERİ YÜKLEYİCİ
-   ═══════════════════════════════════════════════════════ */
-async function veriYukle() {
-  const durumEl = document.getElementById('yukleme-durumu');
-  durumEl.textContent = '⏳ Yükleniyor…';
-  durumEl.className   = 'durum-yukleniyor';
+veriHazirla();
+filtreDoldur();
+panelleriGuncelle();
 
-  try {
-    const yanit = await fetch(CSV_URL);
-    if (!yanit.ok) throw new Error(`HTTP ${yanit.status}`);
-    const metin = await yanit.text();
-    const satirlar = csvParse(metin);
+const simdi = new Date();
+document.getElementById('son-guncelleme').textContent =
+  fmtTarih(simdi)+' '+simdi.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+document.getElementById('yukleme-durumu').textContent = `✓ ${tumVeri.length} kayıt yüklendi`;
 
-    if (!satirlar.length) throw new Error('Veri boş');
-
-    tumVeri = veriIsle(satirlar);
-
-    if (!tumVeri.length) throw new Error('İşlenebilir satır bulunamadı');
-
-    filtreDoldur();
-    panelleriGuncelle();
-
-    const simdi = new Date();
-    document.getElementById('son-guncelleme').textContent = fmtTarih(simdi) +
-      ' ' + simdi.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-
-    durumEl.textContent = `✓ ${tumVeri.length} kayıt yüklendi`;
-    durumEl.className   = 'durum-hazir';
-
-  } catch (hata) {
-    console.error('Veri yükleme hatası:', hata);
-    durumEl.textContent = '✕ Veri yüklenemedi';
-    durumEl.className   = 'durum-hata';
-
-    // Hata mesajı panellere yansıt
-    document.getElementById('detay-tbody').innerHTML = `
-      <tr><td colspan="10" style="text-align:center;padding:30px">
-        <div style="color:#C62828;font-weight:600;font-size:.9rem">⚠️ Veri kaynağına ulaşılamadı</div>
-        <div style="color:#90A4AE;margin-top:6px;font-size:.78rem">
-          Hata: ${hata.message}<br>
-          Google Sheets dokümanının "Bağlantıya sahip herkes" ile paylaşıldığından emin olun.
-        </div>
-      </td></tr>`;
-
-    ['kpi-toplam-tuketim','kpi-toplam-uretim','kpi-birim-kwh','kpi-hedef-sapma','kpi-co2']
-      .forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.querySelector('.kpi-deger').textContent = '—';
-      });
-  }
-}
-
-/* ═══════════════════════════════════════════════════════
-   BAŞLATMA
-   ═══════════════════════════════════════════════════════ */
-document.getElementById('hat-filtre').addEventListener('change',      panelleriGuncelle);
-document.getElementById('tip-filtre').addEventListener('change',      panelleriGuncelle);
-document.getElementById('baslangic-filtre').addEventListener('change', panelleriGuncelle);
-document.getElementById('bitis-filtre').addEventListener('change',     panelleriGuncelle);
-document.getElementById('siralama').addEventListener('change',         panelleriGuncelle);
-
-veriYukle();
-
-// 5 dakikada bir otomatik yenileme
-setInterval(veriYukle, 5 * 60 * 1000);
+['hat-filtre','tip-filtre','baslangic-filtre','bitis-filtre','siralama'].forEach(id =>
+  document.getElementById(id).addEventListener('change', panelleriGuncelle));
 </script>
 </body>
 </html>
