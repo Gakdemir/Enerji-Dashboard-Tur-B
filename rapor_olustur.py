@@ -132,8 +132,9 @@ pdf.govde(
 )
 
 y = pdf.get_y() + 2
-bw, bh = 120, 22
+bw, bh = 90, 16
 bx = (pdf.w - bw) / 2
+gap = 10
 
 boxes = [
     ("CANLI VERİ", "(Google Sheets - CSV)", (21, 101, 192)),
@@ -143,28 +144,28 @@ boxes = [
 ]
 
 for i, (baslik, alt, renk) in enumerate(boxes):
-    by = y + i * (bh + 16)
+    by = y + i * (bh + gap)
     pdf.set_fill_color(*renk)
     pdf.set_draw_color(*renk)
     pdf.rect(bx, by, bw, bh, style="F")
-    pdf.set_xy(bx, by + 3)
-    pdf.set_font("DejaVu", "B", 10)
+    pdf.set_xy(bx, by + 2)
+    pdf.set_font("DejaVu", "B", 9)
     pdf.set_text_color(255, 255, 255)
-    pdf.cell(bw, 6, baslik, align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_xy(bx, by + 10)
-    pdf.set_font("DejaVu", "", 8)
-    pdf.cell(bw, 6, alt, align="C")
+    pdf.cell(bw, 5, baslik, align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_xy(bx, by + 8)
+    pdf.set_font("DejaVu", "", 7)
+    pdf.cell(bw, 5, alt, align="C")
 
     if i < len(boxes) - 1:
         ax = pdf.w / 2
         ay1 = by + bh
-        ay2 = by + bh + 16
+        ay2 = by + bh + gap
         pdf.set_draw_color(100, 100, 100)
         pdf.line(ax, ay1, ax, ay2)
-        pdf.line(ax - 3, ay2 - 4, ax, ay2)
-        pdf.line(ax + 3, ay2 - 4, ax, ay2)
+        pdf.line(ax - 2, ay2 - 3, ax, ay2)
+        pdf.line(ax + 2, ay2 - 3, ax, ay2)
 
-pdf.set_y(y + len(boxes) * (bh + 16) + 5)
+pdf.set_y(y + len(boxes) * (bh + gap) + 4)
 
 pdf.govde(
     "Akış: Google Sheets'ten her 5 dakikada CSV olarak veri çekilir. "
