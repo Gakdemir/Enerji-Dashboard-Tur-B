@@ -16,6 +16,8 @@ class Rapor(FPDF):
         self.cell(0, 10, f"Sayfa {self.page_no()}/{{nb}}", align="C")
 
     def baslik(self, text, size=16):
+        if self.get_y() > 240:
+            self.add_page()
         self.set_font("DejaVu", "B", size)
         self.set_text_color(21, 101, 192)
         self.cell(0, 10, text, new_x="LMARGIN", new_y="NEXT")
@@ -38,7 +40,6 @@ class Rapor(FPDF):
     def madde(self, text):
         self.set_font("DejaVu", "", 10)
         self.set_text_color(50, 50, 50)
-        x = self.get_x()
         self.cell(6, 6, chr(8226))
         self.multi_cell(0, 6, text)
         self.ln(1)
@@ -58,7 +59,6 @@ class Rapor(FPDF):
 pdf = Rapor()
 pdf.alias_nb_pages()
 
-# Font - DejaVu supports Turkish chars
 pdf.add_font("DejaVu", "", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
 pdf.add_font("DejaVu", "B", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
 pdf.add_font("DejaVu", "I", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
@@ -96,7 +96,7 @@ for etiket, deger in bilgiler:
     pdf.set_font("DejaVu", "", 13)
     pdf.cell(0, 10, f"  {deger}", new_x="LMARGIN", new_y="NEXT")
 
-# ── BÖLÜM 1: KAPAK BİLGİLERİ (detay) ──
+# ── BÖLÜM 1 + 2: aynı sayfada başlasın ──
 pdf.add_page()
 pdf.baslik("1. Kapak Bilgileri")
 pdf.govde(
@@ -110,7 +110,6 @@ pdf.govde(
     "ve sapmaları görselleştirir."
 )
 
-# ── BÖLÜM 2: SENARYO ve PERSONA ──
 pdf.baslik("2. Senaryo ve Persona")
 pdf.altbaslik("Pano kimin için?")
 pdf.govde(
@@ -130,7 +129,7 @@ pdf.madde("Birim başına enerji tüketimi hedefin ne kadar üzerinde/altında?"
 pdf.madde("Hangi hat en çok enerji tüketiyor (Pareto analizi)?")
 pdf.madde("Zaman içinde tüketim trendi nasıl değişiyor?")
 
-# ── BÖLÜM 3: MİMARİ ŞEMA ──
+# ── BÖLÜM 3: MİMARİ ŞEMA ── (yeni sayfa - kutular kesilmesin)
 pdf.add_page()
 pdf.baslik("3. Mimari Şeması")
 pdf.govde(
@@ -183,7 +182,7 @@ pdf.govde(
     "Son olarak kullanıcı arayüzünde filtreler, KPI kartları, grafikler ve tablo olarak sunulur."
 )
 
-# ── BÖLÜM 4: BAĞLAM ──
+# ── BÖLÜM 4: BAĞLAM ── (devam, yeni sayfa yok)
 pdf.baslik("4. Bağlamı Sade Tutmak ve Önemi")
 pdf.govde(
     "Claude ile çalışırken bağlamı (context) sade tutmak projenin en kritik başarı "
@@ -210,7 +209,7 @@ pdf.govde(
     "canlı çektik, böylece veri bağlamı kirletmedi."
 )
 
-# ── BÖLÜM 5: TUR A / TUR B KARŞILAŞTIRMASI ──
+# ── BÖLÜM 5: TUR A / TUR B ── (devam, yeni sayfa yok)
 pdf.baslik("5. Tur A ile Tur B Karşılaştırması")
 
 pdf.set_font("DejaVu", "B", 10)
@@ -235,11 +234,10 @@ rows = [
     ("İterasyon sayısı", "1-2", "6+ (git geçmişi)"),
 ]
 for kriter, a, b in rows:
-    fill = False
     pdf.set_fill_color(245, 247, 250)
-    pdf.cell(col_w[0], 7, kriter, border=1, fill=fill)
-    pdf.cell(col_w[1], 7, a, border=1, fill=fill, align="C")
-    pdf.cell(col_w[2], 7, b, border=1, fill=fill, align="C")
+    pdf.cell(col_w[0], 7, kriter, border=1)
+    pdf.cell(col_w[1], 7, a, border=1, align="C")
+    pdf.cell(col_w[2], 7, b, border=1, align="C")
     pdf.ln()
 
 pdf.ln(4)
@@ -249,8 +247,7 @@ pdf.govde(
     "iteratif bir geliştirme süreci izlendi. Her commit bir iyileştirme adımıydı."
 )
 
-# ── BÖLÜM 6: ETKİLİ PROMPTLAR ──
-pdf.add_page()
+# ── BÖLÜM 6: ETKİLİ PROMPTLAR ── (devam)
 pdf.baslik("6. En Etkili 3-5 Prompt")
 
 pdf.prompt_kutusu(
@@ -310,7 +307,7 @@ pdf.govde(
     "Bu prompt, tasarım ilkesini (sadelik) teknik talimatla birleştirdi."
 )
 
-# ── BÖLÜM 7: ZORLUKLAR ──
+# ── BÖLÜM 7: ZORLUKLAR ── (devam)
 pdf.baslik("7. Karşılaşılan Zorluklar")
 
 pdf.altbaslik("Zorluk 1: Üretim Adedinin Çift Sayılması")
@@ -337,7 +334,7 @@ pdf.govde(
     "birkaç commit aldı ama sonunda sağlam bir çözüme ulaşıldı."
 )
 
-# ── BÖLÜM 8: KENDİNE NOT ──
+# ── BÖLÜM 8: KENDİNE NOT ── (devam)
 pdf.baslik("8. Kendime Notlarım")
 
 pdf.altbaslik("Neyi iyi yaptım?")
