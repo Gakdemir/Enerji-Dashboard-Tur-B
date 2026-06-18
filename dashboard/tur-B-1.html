@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Enerji Dashboard – VALEO</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -193,6 +194,59 @@
     .tablo-sarici::-webkit-scrollbar { width: 5px; }
     .tablo-sarici::-webkit-scrollbar-track { background: transparent; }
     .tablo-sarici::-webkit-scrollbar-thumb { background: var(--kenar); border-radius: 3px; }
+
+    #snip-btn {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.3);
+      color: #fff;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: .78rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background .2s;
+    }
+    #snip-btn:hover { background: rgba(255,255,255,.25); }
+
+    #snip-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      cursor: crosshair;
+      background: rgba(0,0,0,.2);
+    }
+    #snip-selection {
+      position: absolute;
+      border: 2px dashed #1565C0;
+      background: rgba(21,101,192,.08);
+    }
+
+    .snip-result {
+      position: fixed;
+      z-index: 10000;
+      box-shadow: 0 4px 24px rgba(0,0,0,.3);
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: move;
+      border: 2px solid var(--mavi);
+    }
+    .snip-result img { display: block; max-width: 80vw; max-height: 80vh; }
+    .snip-close {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 22px;
+      height: 22px;
+      background: #C62828;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      font-size: 13px;
+      line-height: 22px;
+      text-align: center;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -203,6 +257,7 @@
     <div>
       <h1>⚡ Enerji Tüketim Dashboard'u – VALEO</h1>
     </div>
+    <button id="snip-btn" title="Ekran Görüntüsü Al">&#9986; Ekran Al</button>
     <div class="meta">
       <div>Son Güncelleme: <span id="son-guncelleme">—</span></div>
       <div style="opacity:.7">S6 Enerji Senaryosu</div>
@@ -305,6 +360,10 @@
     </div>
 
   </div>
+</div>
+
+<div id="snip-overlay">
+  <div id="snip-selection"></div>
 </div>
 
 <script>
@@ -726,6 +785,92 @@ document.getElementById('siralama').addEventListener('change',         panelleri
 
 veriYukle();
 setInterval(veriYukle, 5 * 60 * 1000);
+
+(function() {
+  const overlay = document.getElementById('snip-overlay');
+  const sel = document.getElementById('snip-selection');
+  let sx, sy, drawing = false;
+
+  document.getElementById('snip-btn').addEventListener('click', function() {
+    overlay.style.display = 'block';
+    sel.style.width = sel.style.height = '0';
+  });
+
+  overlay.addEventListener('mousedown', function(e) {
+    sx = e.clientX; sy = e.clientY;
+    sel.style.left = sx + 'px'; sel.style.top = sy + 'px';
+    sel.style.width = sel.style.height = '0';
+    drawing = true;
+  });
+
+  overlay.addEventListener('mousemove', function(e) {
+    if (!drawing) return;
+    const x = Math.min(e.clientX, sx), y = Math.min(e.clientY, sy);
+    sel.style.left = x + 'px'; sel.style.top = y + 'px';
+    sel.style.width = Math.abs(e.clientX - sx) + 'px';
+    sel.style.height = Math.abs(e.clientY - sy) + 'px';
+  });
+
+  overlay.addEventListener('mouseup', function(e) {
+    if (!drawing) return;
+    drawing = false;
+    const rect = {
+      x: Math.min(e.clientX, sx),
+      y: Math.min(e.clientY, sy),
+      w: Math.abs(e.clientX - sx),
+      h: Math.abs(e.clientY - sy)
+    };
+    overlay.style.display = 'none';
+    if (rect.w < 10 || rect.h < 10) return;
+
+    html2canvas(document.body, {
+      x: rect.x + window.scrollX,
+      y: rect.y + window.scrollY,
+      width: rect.w,
+      height: rect.h,
+      scale: window.devicePixelRatio || 1,
+      useCORS: true
+    }).then(function(canvas) {
+      var wrap = document.createElement('div');
+      wrap.className = 'snip-result';
+      wrap.style.top = rect.y + 'px';
+      wrap.style.left = rect.x + 'px';
+
+      var img = document.createElement('img');
+      img.src = canvas.toDataURL();
+      wrap.appendChild(img);
+
+      var btn = document.createElement('button');
+      btn.className = 'snip-close';
+      btn.textContent = '×';
+      btn.addEventListener('click', function() { wrap.remove(); });
+      wrap.appendChild(btn);
+
+      var ox, oy, dragging = false;
+      wrap.addEventListener('mousedown', function(ev) {
+        if (ev.target === btn) return;
+        dragging = true;
+        ox = ev.clientX - wrap.offsetLeft;
+        oy = ev.clientY - wrap.offsetTop;
+      });
+      document.addEventListener('mousemove', function(ev) {
+        if (!dragging) return;
+        wrap.style.left = (ev.clientX - ox) + 'px';
+        wrap.style.top = (ev.clientY - oy) + 'px';
+      });
+      document.addEventListener('mouseup', function() { dragging = false; });
+
+      document.body.appendChild(wrap);
+    });
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      overlay.style.display = 'none';
+      drawing = false;
+    }
+  });
+})();
 </script>
 </body>
 </html>
