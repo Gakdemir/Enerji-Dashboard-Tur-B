@@ -85,7 +85,7 @@ pdf.ln(40)
 pdf.set_text_color(60, 60, 60)
 bilgiler = [
     ("Ad-Soyad:", "Gürsan Akdemir"),
-    ("Ekip:", "Bireysel"),
+    ("Ekip:", "Ar-ge"),
     ("Kullanılan Araç:", "Claude (Anthropic)"),
     ("Senaryo:", "S6 - Enerji Tüketim Takibi"),
     ("Tarih:", "Haziran 2025"),
