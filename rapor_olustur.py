@@ -67,16 +67,21 @@ pdf.set_auto_page_break(auto=True, margin=20)
 
 # ── KAPAK ──
 pdf.add_page()
-pdf.ln(50)
-pdf.set_font("DejaVu", "B", 28)
+pdf.ln(70)
+pdf.set_font("DejaVu", "B", 36)
 pdf.set_text_color(21, 101, 192)
-pdf.cell(0, 15, "VALEO Enerji Dashboard", align="C", new_x="LMARGIN", new_y="NEXT")
-pdf.set_font("DejaVu", "", 14)
-pdf.set_text_color(80, 80, 80)
+pdf.cell(0, 18, "VALEO", align="C", new_x="LMARGIN", new_y="NEXT")
+pdf.cell(0, 18, "Enerji Dashboard (S6)", align="C", new_x="LMARGIN", new_y="NEXT")
+pdf.ln(6)
+pdf.set_draw_color(21, 101, 192)
+line_w = 80
+pdf.line((pdf.w - line_w) / 2, pdf.get_y(), (pdf.w + line_w) / 2, pdf.get_y())
+pdf.ln(8)
+pdf.set_font("DejaVu", "", 16)
+pdf.set_text_color(100, 100, 100)
 pdf.cell(0, 10, "Tur B - Proje Raporu", align="C", new_x="LMARGIN", new_y="NEXT")
-pdf.ln(30)
+pdf.ln(40)
 
-pdf.set_font("DejaVu", "", 11)
 pdf.set_text_color(60, 60, 60)
 bilgiler = [
     ("Ad-Soyad:", "Gürsan Akdemir"),
@@ -86,10 +91,10 @@ bilgiler = [
     ("Tarih:", "Haziran 2025"),
 ]
 for etiket, deger in bilgiler:
-    pdf.set_font("DejaVu", "B", 11)
-    pdf.cell(60, 8, etiket, align="R")
-    pdf.set_font("DejaVu", "", 11)
-    pdf.cell(0, 8, f"  {deger}", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("DejaVu", "B", 13)
+    pdf.cell(65, 10, etiket, align="R")
+    pdf.set_font("DejaVu", "", 13)
+    pdf.cell(0, 10, f"  {deger}", new_x="LMARGIN", new_y="NEXT")
 
 # ── BÖLÜM 1: KAPAK BİLGİLERİ (detay) ──
 pdf.add_page()
