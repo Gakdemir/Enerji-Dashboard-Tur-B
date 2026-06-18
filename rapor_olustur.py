@@ -126,15 +126,18 @@ pdf.madde("Hangi hat en çok enerji tüketiyor (Pareto analizi)?")
 pdf.madde("Zaman içinde tüketim trendi nasıl değişiyor?")
 
 # ── BÖLÜM 3: MİMARİ ŞEMA ──
+pdf.add_page()
 pdf.baslik("3. Mimari Şeması")
 pdf.govde(
     "Aşağıdaki şema, sistemin dört ana katmanını ve aralarındaki veri akışını gösterir:"
 )
 
-y = pdf.get_y() + 2
-bw, bh = 90, 16
+pdf.set_auto_page_break(auto=False)
+
+y = pdf.get_y() + 4
+bw, bh = 80, 14
 bx = (pdf.w - bw) / 2
-gap = 10
+gap = 8
 
 boxes = [
     ("CANLI VERİ", "(Google Sheets - CSV)", (21, 101, 192)),
@@ -143,16 +146,16 @@ boxes = [
     ("BAĞLAM (UI)", "(KPI, Grafik, Tablo)", (249, 168, 37)),
 ]
 
-for i, (baslik, alt, renk) in enumerate(boxes):
+for i, (baslik_txt, alt, renk) in enumerate(boxes):
     by = y + i * (bh + gap)
     pdf.set_fill_color(*renk)
     pdf.set_draw_color(*renk)
     pdf.rect(bx, by, bw, bh, style="F")
-    pdf.set_xy(bx, by + 2)
-    pdf.set_font("DejaVu", "B", 9)
+    pdf.set_xy(bx, by + 1.5)
+    pdf.set_font("DejaVu", "B", 8)
     pdf.set_text_color(255, 255, 255)
-    pdf.cell(bw, 5, baslik, align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_xy(bx, by + 8)
+    pdf.cell(bw, 5, baslik_txt, align="C")
+    pdf.set_xy(bx, by + 7)
     pdf.set_font("DejaVu", "", 7)
     pdf.cell(bw, 5, alt, align="C")
 
@@ -165,6 +168,7 @@ for i, (baslik, alt, renk) in enumerate(boxes):
         pdf.line(ax - 2, ay2 - 3, ax, ay2)
         pdf.line(ax + 2, ay2 - 3, ax, ay2)
 
+pdf.set_auto_page_break(auto=True, margin=20)
 pdf.set_y(y + len(boxes) * (bh + gap) + 4)
 
 pdf.govde(
