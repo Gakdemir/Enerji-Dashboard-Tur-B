@@ -26,6 +26,22 @@ import winreg
 import subprocess
 
 
+def dismiss_alerts(driver, label=""):
+    """Açık olan PLM uyarı pencerelerini (alert) kapatır."""
+    closed = 0
+    for _ in range(5):
+        try:
+            alert = driver.switch_to.alert
+            text = alert.text
+            alert.accept()
+            closed += 1
+            print(f"Uyarı kapatıldı{(' (' + label + ')') if label else ''}: {text}")
+            time.sleep(0.5)
+        except Exception:
+            break
+    return closed
+
+
 def paste_text(element, text):
     """Clipboard üzerinden yapıştırarak hızlı metin girer (IE driver send_keys çok yavaş)."""
     subprocess.run(["clip.exe"], input=text.encode("utf-16-le"), check=True)
@@ -67,6 +83,8 @@ def open_edge_and_connect():
     options.ignore_zoom_level = True
     options.ignore_protected_mode_settings = True
     options.require_window_focus = False
+    # PLM'in fırlattığı uyarı (alert) pencerelerini otomatik kapat (OK)
+    options.unhandled_prompt_behavior = "accept"
 
     if os.path.isfile(IEDRIVER_PATH):
         print(f"IEDriverServer kullanılıyor: {IEDRIVER_PATH}")
@@ -126,9 +144,14 @@ def search_part(driver, part_number):
 
     # Arama kutusu birkaç saniye sonra render olabilir - tekrar dene
     for attempt in range(6):
+        dismiss_alerts(driver, "arama öncesi")
         driver.switch_to.default_content()
-        if _type_search_recursive(driver, search_query):
-            return
+        try:
+            if _type_search_recursive(driver, search_query):
+                return
+        except Exception as e:
+            print(f"Arama denemesi {attempt+1} hata: {e}")
+            dismiss_alerts(driver, "arama hatası")
         time.sleep(2)
 
     raise Exception("Arama kutusu bulunamadı! Sayfanın yüklendiğinden emin olun.")
@@ -283,6 +306,7 @@ def main():
 
     print("PLM sayfasının tam yüklenmesi bekleniyor...")
     time.sleep(5)
+    dismiss_alerts(driver, "sayfa yükleme sonrası")
 
     search_part(driver, PART_NUMBER)
 
