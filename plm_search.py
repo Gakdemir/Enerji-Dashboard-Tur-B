@@ -240,7 +240,31 @@ def main():
     click_latest_drawing(driver, PART_NUMBER)
 
     print("Drawing sayfası yükleniyor...")
-    time.sleep(15)
+    # Loading animasyonunun bitmesini bekle (max 60 sn)
+    for i in range(12):
+        time.sleep(5)
+        driver.switch_to.default_content()
+        # "Derived Output" sekmesi görünür olduysa sayfa yüklenmiştir
+        try:
+            frames = driver.find_elements(By.TAG_NAME, "iframe")
+            for frame in frames:
+                try:
+                    driver.switch_to.frame(frame)
+                    tabs = driver.find_elements(By.PARTIAL_LINK_TEXT, "Derived")
+                    if tabs:
+                        print(f"Sayfa yüklendi ({(i+1)*5} sn sonra)")
+                        driver.switch_to.default_content()
+                        break
+                    driver.switch_to.default_content()
+                except Exception:
+                    driver.switch_to.default_content()
+            else:
+                continue
+            break
+        except Exception:
+            pass
+    else:
+        print("Sayfa yüklenmesi 60 saniyeyi aştı, devam ediliyor...")
 
     driver.switch_to.default_content()
     click_derived_output(driver)
