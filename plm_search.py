@@ -220,6 +220,7 @@ def click_tab_in_frames(driver, tab_text):
 
 def click_derived_output(driver):
     """Derived Output sekmesine tıklar."""
+    driver.switch_to.default_content()
     click_tab_in_frames(driver, "Derived Output")
 
 
@@ -239,8 +240,9 @@ def main():
     click_latest_drawing(driver, PART_NUMBER)
 
     print("Drawing sayfası yükleniyor...")
-    time.sleep(10)
+    time.sleep(15)
 
+    driver.switch_to.default_content()
     click_derived_output(driver)
 
     print("Derived Output yükleniyor...")
