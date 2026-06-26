@@ -96,6 +96,59 @@ def search_part(driver, part_number):
     print(f"'{search_query}' araması yapıldı.")
 
 
+def click_latest_drawing(driver, part_number):
+    """Arama sonuçlarından DRW_ ile başlayan en yüksek revizyonlu linke tıklar."""
+    drw_prefix = f"DRW_{part_number}"
+
+    # Sonuç tablosundaki tüm linkleri bul
+    links = driver.find_elements(By.CSS_SELECTOR, "a")
+    drawing_links = []
+    for link in links:
+        text = link.text.strip()
+        if text.startswith(drw_prefix):
+            drawing_links.append(link)
+
+    if not drawing_links:
+        # Frame'lerin içine bak
+        frames = driver.find_elements(By.TAG_NAME, "iframe")
+        for frame in frames:
+            try:
+                driver.switch_to.frame(frame)
+                links = driver.find_elements(By.CSS_SELECTOR, "a")
+                for link in links:
+                    text = link.text.strip()
+                    if text.startswith(drw_prefix):
+                        drawing_links.append(link)
+                if drawing_links:
+                    break
+                driver.switch_to.default_content()
+            except Exception:
+                driver.switch_to.default_content()
+
+    if not drawing_links:
+        raise Exception(f"'{drw_prefix}' ile başlayan link bulunamadı!")
+
+    # En yüksek revizyonu bul - revision sütunu Name'in yanındaki hücrede
+    best_link = drawing_links[0]
+    best_rev = ""
+    for link in drawing_links:
+        try:
+            row = link.find_element(By.XPATH, "./ancestor::tr")
+            cells = row.find_elements(By.TAG_NAME, "td")
+            for cell in cells:
+                cell_text = cell.text.strip()
+                if len(cell_text) == 1 and cell_text.isalpha():
+                    if cell_text > best_rev:
+                        best_rev = cell_text
+                        best_link = link
+                    break
+        except Exception:
+            pass
+
+    print(f"Tıklanıyor: {best_link.text} (Revizyon: {best_rev or 'N/A'})")
+    best_link.click()
+
+
 def main():
     print("Edge başlatılıyor...")
     driver = open_edge_and_connect()
@@ -108,7 +161,12 @@ def main():
 
     print("Sonuçların yüklenmesi bekleniyor...")
     time.sleep(5)
-    print("Arama tamamlandı.")
+
+    click_latest_drawing(driver, PART_NUMBER)
+
+    print("Drawing sayfası yükleniyor...")
+    time.sleep(5)
+    print("Tamamlandı.")
 
 
 if __name__ == "__main__":
