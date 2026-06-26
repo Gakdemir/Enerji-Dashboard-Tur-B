@@ -129,11 +129,24 @@ def click_latest_drawing(driver, part_number):
                 return link
         return None
 
+    def click_or_navigate(link, label):
+        """Linkin href'ini alıp ana pencerede navigate et."""
+        href = link.get_attribute("href")
+        onclick = link.get_attribute("onclick")
+        print(f"{label}: text='{link.text}', href='{href}', onclick='{onclick}'")
+        if href and href != "#" and "javascript:" not in href:
+            driver.switch_to.default_content()
+            driver.get(href)
+        elif onclick:
+            driver.switch_to.default_content()
+            driver.execute_script(onclick)
+        else:
+            link.click()
+
     # Önce mevcut sayfada dene
     link = find_drw_link()
     if link:
-        print(f"Tıklanıyor: {link.text}")
-        link.click()
+        click_or_navigate(link, "Sayfada bulundu")
         return
 
     # Tüm frame'lerin içinde ara
@@ -142,18 +155,15 @@ def click_latest_drawing(driver, part_number):
             driver.switch_to.frame(frame)
             link = find_drw_link()
             if link:
-                print(f"Frame {i} içinde bulundu. Tıklanıyor: {link.text}")
-                link.click()
+                click_or_navigate(link, f"Frame {i} içinde bulundu")
                 return
-            # İç içe frame olabilir
             inner_frames = driver.find_elements(By.TAG_NAME, "iframe")
             for j, inner in enumerate(inner_frames):
                 try:
                     driver.switch_to.frame(inner)
                     link = find_drw_link()
                     if link:
-                        print(f"Frame {i}/{j} içinde bulundu. Tıklanıyor: {link.text}")
-                        link.click()
+                        click_or_navigate(link, f"Frame {i}/{j} içinde bulundu")
                         return
                     driver.switch_to.parent_frame()
                 except Exception:
