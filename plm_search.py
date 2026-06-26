@@ -165,6 +165,57 @@ def click_latest_drawing(driver, part_number):
     raise Exception(f"'{drw_prefix}' ile başlayan link bulunamadı!")
 
 
+def click_tab_in_frames(driver, tab_text):
+    """Tüm frame'lerde belirtilen metni içeren sekmeyi bulup tıklar."""
+    def find_tab():
+        links = driver.find_elements(By.PARTIAL_LINK_TEXT, tab_text)
+        if links:
+            return links[0]
+        spans = driver.find_elements(By.XPATH, f"//*[contains(text(), '{tab_text}')]")
+        for span in spans:
+            if span.is_displayed():
+                return span
+        return None
+
+    tab = find_tab()
+    if tab:
+        print(f"Sekme bulundu: {tab.text}")
+        tab.click()
+        return
+
+    frames = driver.find_elements(By.TAG_NAME, "iframe")
+    for i, frame in enumerate(frames):
+        try:
+            driver.switch_to.frame(frame)
+            tab = find_tab()
+            if tab:
+                print(f"Frame {i} içinde sekme bulundu: {tab.text}")
+                tab.click()
+                return
+            inner_frames = driver.find_elements(By.TAG_NAME, "iframe")
+            for j, inner in enumerate(inner_frames):
+                try:
+                    driver.switch_to.frame(inner)
+                    tab = find_tab()
+                    if tab:
+                        print(f"Frame {i}/{j} içinde sekme bulundu: {tab.text}")
+                        tab.click()
+                        return
+                    driver.switch_to.parent_frame()
+                except Exception:
+                    driver.switch_to.parent_frame()
+            driver.switch_to.default_content()
+        except Exception:
+            driver.switch_to.default_content()
+
+    raise Exception(f"'{tab_text}' sekmesi bulunamadı!")
+
+
+def click_derived_output(driver):
+    """Derived Output sekmesine tıklar."""
+    click_tab_in_frames(driver, "Derived Output")
+
+
 def main():
     print("Edge başlatılıyor...")
     driver = open_edge_and_connect()
@@ -181,6 +232,11 @@ def main():
     click_latest_drawing(driver, PART_NUMBER)
 
     print("Drawing sayfası yükleniyor...")
+    time.sleep(10)
+
+    click_derived_output(driver)
+
+    print("Derived Output yükleniyor...")
     time.sleep(5)
     print("Tamamlandı.")
 
