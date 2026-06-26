@@ -159,61 +159,55 @@ def click_latest_drawing(driver, part_number):
     raise Exception(f"'{drw_prefix}' ile başlayan link bulunamadı!")
 
 
-def click_tab_in_frames(driver, tab_text):
-    """Tüm frame'lerde belirtilen metni içeren sekmeyi bulup tıklar."""
-    def find_tab():
-        short_text = tab_text[:14] if len(tab_text) > 14 else tab_text
-        links = driver.find_elements(By.PARTIAL_LINK_TEXT, short_text)
-        if links:
-            return links[0]
-        spans = driver.find_elements(By.XPATH, f"//*[contains(text(), '{short_text}')]")
-        for span in spans:
-            if span.is_displayed():
-                return span
-        xpath = "/html/body/div/div[3]/div[1]/ul/li[5]/div"
-        elements = driver.find_elements(By.XPATH, xpath)
-        if elements:
-            return elements[0]
-        return None
-
-    tab = find_tab()
-    if tab:
-        print(f"Sekme bulundu: {tab.text}")
-        tab.click()
-        return
-
-    frames = driver.find_elements(By.TAG_NAME, "iframe")
-    for i, frame in enumerate(frames):
+def _click_tab_recursive(driver, matches, depth=0, max_depth=4):
+    """Mevcut frame ve iç frame'lerde eşleşen sekmeyi bulup JS ile tıklar."""
+    # Sekme genelde <a>, <div>, <span>, <td> veya <li> elemanı (anchor olmayabilir)
+    candidates = driver.find_elements(
+        By.XPATH, "//*[self::a or self::div or self::span or self::td or self::li]"
+    )
+    for el in candidates:
         try:
-            driver.switch_to.frame(frame)
-            tab = find_tab()
-            if tab:
-                print(f"Frame {i} içinde sekme bulundu: {tab.text}")
-                tab.click()
-                return
-            inner_frames = driver.find_elements(By.TAG_NAME, "iframe")
-            for j, inner in enumerate(inner_frames):
-                try:
-                    driver.switch_to.frame(inner)
-                    tab = find_tab()
-                    if tab:
-                        print(f"Frame {i}/{j} içinde sekme bulundu: {tab.text}")
-                        tab.click()
-                        return
-                    driver.switch_to.parent_frame()
-                except Exception:
-                    driver.switch_to.parent_frame()
-            driver.switch_to.default_content()
+            txt = el.text.strip()
         except Exception:
-            driver.switch_to.default_content()
+            continue
+        # "Derived Output (3)" gibi kısa bir etiket olmalı (uzun container'ları ele)
+        if txt and matches(txt) and len(txt) <= 22 and el.is_displayed():
+            driver.execute_script("arguments[0].click();", el)
+            print(f"Sekmeye tıklandı: '{txt}'")
+            return True
 
-    raise Exception(f"'{tab_text}' sekmesi bulunamadı!")
+    if depth >= max_depth:
+        return False
+
+    frames = driver.find_elements(By.CSS_SELECTOR, "frame, iframe")
+    for fr in frames:
+        try:
+            driver.switch_to.frame(fr)
+        except Exception:
+            continue
+        if _click_tab_recursive(driver, matches, depth + 1, max_depth):
+            return True
+        driver.switch_to.parent_frame()
+    return False
 
 
-def click_derived_output(driver):
-    """Derived Output sekmesine tıklar."""
-    driver.switch_to.default_content()
-    click_tab_in_frames(driver, "Derived Output")
+def click_derived_output(driver, timeout=45):
+    """Derived Output sekmesi görünene kadar bekleyip tıklar.
+
+    Not: Properties sekmesi IE modu gerektirdiği için 'Loading'de kalabilir,
+    ama Derived Output sekmesine tıklamak için onu beklemeye gerek yok.
+    """
+    def matches(t):
+        return t.startswith("Derived Output")
+
+    end = time.time() + timeout
+    while time.time() < end:
+        driver.switch_to.default_content()
+        if _click_tab_recursive(driver, matches):
+            return
+        time.sleep(2)
+
+    raise Exception("Derived Output sekmesi bulunamadı!")
 
 
 def main():
@@ -231,13 +225,13 @@ def main():
 
     click_latest_drawing(driver, PART_NUMBER)
 
-    print("Drawing sayfası yükleniyor...")
-    time.sleep(15)
-
-    driver.switch_to.default_content()
+    # Properties sekmesi 'Loading'de kalabilir (IE modu) - beklemeden
+    # doğrudan Derived Output sekmesine geçiyoruz. Tab çubuğu zaten DOM'da.
+    print("Drawing sayfası açılıyor, Derived Output sekmesi aranıyor...")
+    time.sleep(3)
     click_derived_output(driver)
 
-    print("Derived Output yükleniyor...")
+    print("Derived Output içeriği yükleniyor...")
     time.sleep(5)
     print("Tamamlandı.")
 
