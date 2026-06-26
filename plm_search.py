@@ -21,6 +21,7 @@ from selenium.webdriver.ie.service import Service as IEService
 from selenium.webdriver.ie.options import Options as IEOptions
 import time
 import os
+import getpass
 import winreg
 
 
@@ -243,10 +244,55 @@ def click_derived_output(driver, timeout=45):
     raise Exception("Derived Output sekmesi bulunamadı!")
 
 
+def get_credentials():
+    """Kimlik bilgilerini ortam değişkeninden ya da cmd'den (gizli) alır.
+    Repoda hiçbir şifre saklanmaz."""
+    username = os.environ.get("PLM_USER")
+    password = os.environ.get("PLM_PASS")
+    if not username:
+        username = input("PLM kullanici adi: ").strip()
+    if not password:
+        password = getpass.getpass("PLM sifre: ")
+    return username, password
+
+
+def login(driver, username, password):
+    """PLM login formunu (j_username / password) doldurup gönderir."""
+    driver.switch_to.default_content()
+
+    user_field = None
+    user_els = driver.find_elements(By.NAME, "j_username")
+    if not user_els:
+        user_els = driver.find_elements(By.CSS_SELECTOR, "input[type='text']")
+    if user_els:
+        user_field = user_els[0]
+
+    pass_els = driver.find_elements(By.CSS_SELECTOR, "input[type='password']")
+
+    if not user_field or not pass_els:
+        print("Login formu bulunamadı (zaten giriş yapılmış olabilir).")
+        return
+
+    pass_field = pass_els[0]
+    user_field.clear()
+    user_field.send_keys(username)
+    pass_field.clear()
+    pass_field.send_keys(password)
+    pass_field.send_keys(Keys.RETURN)
+    print("Giriş bilgileri gönderildi, bekleniyor...")
+    time.sleep(8)
+
+
 def main():
+    # Kimlik bilgilerini Edge açılmadan önce al
+    username, password = get_credentials()
+
     print("Edge başlatılıyor...")
     driver = open_edge_and_connect()
     print(f"Bağlanıldı. Sayfa: {driver.title}")
+
+    print("Login deneniyor...")
+    login(driver, username, password)
 
     print("PLM sayfasının tam yüklenmesi bekleniyor...")
     time.sleep(5)
