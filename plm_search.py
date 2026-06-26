@@ -120,47 +120,49 @@ def click_latest_drawing(driver, part_number):
               f"name='{frame.get_attribute('name')}', "
               f"src='{frame.get_attribute('src')}'")
 
-    xpath = "/html/body/form/div[2]/div[1]/div[2]/table/tbody/tr[3]/td"
+    drw_prefix = f"DRW_{part_number}"
 
-    # Önce doğrudan dene
-    elements = driver.find_elements(By.XPATH, xpath)
-    if elements:
-        print(f"Tıklanıyor: {elements[0].text}")
-        elements[0].click()
+    def find_drw_link():
+        links = driver.find_elements(By.PARTIAL_LINK_TEXT, "DRW_")
+        for link in links:
+            if link.text.strip().startswith(drw_prefix):
+                return link
+        return None
+
+    # Önce mevcut sayfada dene
+    link = find_drw_link()
+    if link:
+        print(f"Tıklanıyor: {link.text}")
+        link.click()
         return
 
-    # Frame'lerin içinde dene
+    # Tüm frame'lerin içinde ara
     for i, frame in enumerate(frames):
         try:
             driver.switch_to.frame(frame)
-            elements = driver.find_elements(By.XPATH, xpath)
-            if elements:
-                print(f"Frame {i} içinde bulundu. Tıklanıyor: {elements[0].text}")
-                elements[0].click()
+            link = find_drw_link()
+            if link:
+                print(f"Frame {i} içinde bulundu. Tıklanıyor: {link.text}")
+                link.click()
                 return
+            # İç içe frame olabilir
+            inner_frames = driver.find_elements(By.TAG_NAME, "iframe")
+            for j, inner in enumerate(inner_frames):
+                try:
+                    driver.switch_to.frame(inner)
+                    link = find_drw_link()
+                    if link:
+                        print(f"Frame {i}/{j} içinde bulundu. Tıklanıyor: {link.text}")
+                        link.click()
+                        return
+                    driver.switch_to.parent_frame()
+                except Exception:
+                    driver.switch_to.parent_frame()
             driver.switch_to.default_content()
         except Exception:
             driver.switch_to.default_content()
 
-    # Hâlâ bulunamadıysa, DRW_ içeren linkleri ara (debug)
-    print("XPath bulunamadı. DRW içeren linkler aranıyor...")
-    driver.switch_to.default_content()
-    for i, frame in enumerate(frames):
-        try:
-            driver.switch_to.frame(frame)
-            links = driver.find_elements(By.PARTIAL_LINK_TEXT, "DRW_")
-            if links:
-                print(f"Frame {i} içinde DRW linkleri:")
-                for link in links:
-                    print(f"  -> {link.text}")
-                links[0].click()
-                print(f"İlk DRW linkine tıklandı: {links[0].text}")
-                return
-            driver.switch_to.default_content()
-        except Exception:
-            driver.switch_to.default_content()
-
-    raise Exception("Drawing linki bulunamadı!")
+    raise Exception(f"'{drw_prefix}' ile başlayan link bulunamadı!")
 
 
 def main():
