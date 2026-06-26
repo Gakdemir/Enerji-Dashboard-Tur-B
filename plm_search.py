@@ -19,18 +19,22 @@ PART_NUMBER = "C597104"
 
 
 def open_edge_and_connect():
-    """Edge'i Selenium ile başlatır (debug modu olmadan)."""
-    options = webdriver.EdgeOptions()
-    options.add_argument(r"--user-data-dir=C:\EdgeSeleniumProfile")
-    options.add_argument("--no-first-run")
-    options.add_argument("--disable-features=msEdgeIEModeTest")
+    """Edge'i debug modunda başlatıp Selenium ile bağlanır."""
+    import subprocess
+    edge_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 
-    driver = webdriver.Edge(options=options)
-    print("Edge açıldı, PLM'e gidiliyor...")
-    driver.get(PLM_URL)
+    subprocess.Popen([
+        edge_path,
+        "--remote-debugging-port=9222",
+        PLM_URL
+    ])
 
-    print("Sayfa yüklenmesi bekleniyor...")
+    print("Edge açılıyor, sayfa yüklenmesi bekleniyor...")
     time.sleep(10)
+
+    options = webdriver.EdgeOptions()
+    options.debugger_address = "127.0.0.1:9222"
+    driver = webdriver.Edge(options=options)
     return driver
 
 
@@ -128,13 +132,21 @@ def click_latest_drawing(driver, part_number):
         """Linkin href'ini alıp ana pencerede navigate et."""
         href = link.get_attribute("href")
         onclick = link.get_attribute("onclick")
-        print(f"{label}: text='{link.text}', href='{href}', onclick='{onclick}'")
-        if href and href != "#" and "javascript:" not in href:
+        outer_html = link.get_attribute("outerHTML")
+        print(f"{label}: text='{link.text}'")
+        print(f"  href='{href}'")
+        print(f"  onclick='{onclick}'")
+        print(f"  html='{outer_html}'")
+        # JavaScript ile üst pencereye yönlendir
+        if href and href != "#":
             driver.switch_to.default_content()
-            driver.get(href)
+            if "javascript:" in href:
+                driver.execute_script(href.replace("javascript:", ""))
+            else:
+                driver.execute_script(f"window.top.location.href = '{href}';")
         elif onclick:
             driver.switch_to.default_content()
-            driver.execute_script(onclick)
+            driver.execute_script(f"window.top.eval(`{onclick}`);")
         else:
             link.click()
 
