@@ -21,12 +21,9 @@ PART_NUMBER = "C597104"
 def open_edge_and_connect():
     """Edge'i Selenium ile başlatır (debug modu olmadan)."""
     options = webdriver.EdgeOptions()
-    # Kullanıcı profilini kullan (kayıtlı şifreler için)
-    options.add_argument(r"--user-data-dir=C:\Users\gakdemir\AppData\Local\Microsoft\Edge\User Data")
-    options.add_argument("--profile-directory=Default")
-    # IE uyumluluk sorunlarını önle
-    options.add_argument("--disable-features=msEdgeIEModeTest")
+    options.add_argument(r"--user-data-dir=C:\EdgeSeleniumProfile")
     options.add_argument("--no-first-run")
+    options.add_argument("--disable-features=msEdgeIEModeTest")
 
     driver = webdriver.Edge(options=options)
     print("Edge açıldı, PLM'e gidiliyor...")
