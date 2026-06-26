@@ -12,6 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.edge.service import Service
 import time
+import subprocess
 
 
 PLM_URL = "https://plm.vnet.valeo.com:7001/enovia/common/emxNavigator.jsp"
@@ -20,12 +21,12 @@ PART_NUMBER = "C597104"
 
 def open_edge_and_connect():
     """Edge'i debug modunda başlatıp Selenium ile bağlanır."""
-    import subprocess
     edge_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 
     subprocess.Popen([
         edge_path,
         "--remote-debugging-port=9222",
+        "--user-data-dir=C:\\EdgeDebugProfile",
         PLM_URL
     ])
 
@@ -96,8 +97,7 @@ def search_part(driver, part_number):
 
 
 def click_latest_drawing(driver, part_number):
-    """Arama sonuçları popup'ında DRW satırına XPath ile tıklar."""
-    # Arama sonuçları popup pencerede açılıyor - ona geç
+    """Arama sonuçları popup'ında DRW satırına tıklar."""
     main_window = driver.current_window_handle
     all_windows = driver.window_handles
     print(f"Toplam pencere sayısı: {len(all_windows)}")
@@ -106,12 +106,10 @@ def click_latest_drawing(driver, part_number):
         driver.switch_to.window(w)
         print(f"  Pencere: {driver.title} - URL: {driver.current_url}")
 
-    # Son pencereye (popup) geç
     if len(all_windows) > 1:
         driver.switch_to.window(all_windows[-1])
         print(f"Popup pencereye geçildi: {driver.title}")
 
-    # Frame'leri listele
     frames = driver.find_elements(By.TAG_NAME, "iframe")
     print(f"Frame sayısı: {len(frames)}")
     for i, frame in enumerate(frames):
@@ -128,41 +126,19 @@ def click_latest_drawing(driver, part_number):
                 return link
         return None
 
-    def click_or_navigate(link, label):
-        """Linkin href'ini alıp ana pencerede navigate et."""
-        href = link.get_attribute("href")
-        onclick = link.get_attribute("onclick")
-        outer_html = link.get_attribute("outerHTML")
-        print(f"{label}: text='{link.text}'")
-        print(f"  href='{href}'")
-        print(f"  onclick='{onclick}'")
-        print(f"  html='{outer_html}'")
-        # JavaScript ile üst pencereye yönlendir
-        if href and href != "#":
-            driver.switch_to.default_content()
-            if "javascript:" in href:
-                driver.execute_script(href.replace("javascript:", ""))
-            else:
-                driver.execute_script(f"window.top.location.href = '{href}';")
-        elif onclick:
-            driver.switch_to.default_content()
-            driver.execute_script(f"window.top.eval(`{onclick}`);")
-        else:
-            link.click()
-
-    # Önce mevcut sayfada dene
     link = find_drw_link()
     if link:
-        click_or_navigate(link, "Sayfada bulundu")
+        print(f"Tıklanıyor: {link.text}")
+        link.click()
         return
 
-    # Tüm frame'lerin içinde ara
     for i, frame in enumerate(frames):
         try:
             driver.switch_to.frame(frame)
             link = find_drw_link()
             if link:
-                click_or_navigate(link, f"Frame {i} içinde bulundu")
+                print(f"Frame {i} içinde bulundu. Tıklanıyor: {link.text}")
+                link.click()
                 return
             inner_frames = driver.find_elements(By.TAG_NAME, "iframe")
             for j, inner in enumerate(inner_frames):
@@ -170,7 +146,8 @@ def click_latest_drawing(driver, part_number):
                     driver.switch_to.frame(inner)
                     link = find_drw_link()
                     if link:
-                        click_or_navigate(link, f"Frame {i}/{j} içinde bulundu")
+                        print(f"Frame {i}/{j} içinde bulundu. Tıklanıyor: {link.text}")
+                        link.click()
                         return
                     driver.switch_to.parent_frame()
                 except Exception:
@@ -185,7 +162,6 @@ def click_latest_drawing(driver, part_number):
 def click_tab_in_frames(driver, tab_text):
     """Tüm frame'lerde belirtilen metni içeren sekmeyi bulup tıklar."""
     def find_tab():
-        # İlk 14 karakter ("Derived Output") ile ara
         short_text = tab_text[:14] if len(tab_text) > 14 else tab_text
         links = driver.find_elements(By.PARTIAL_LINK_TEXT, short_text)
         if links:
@@ -194,7 +170,6 @@ def click_tab_in_frames(driver, tab_text):
         for span in spans:
             if span.is_displayed():
                 return span
-        # XPath ile de dene
         xpath = "/html/body/div/div[3]/div[1]/ul/li[5]/div"
         elements = driver.find_elements(By.XPATH, xpath)
         if elements:
@@ -257,31 +232,7 @@ def main():
     click_latest_drawing(driver, PART_NUMBER)
 
     print("Drawing sayfası yükleniyor...")
-    # Loading animasyonunun bitmesini bekle (max 60 sn)
-    for i in range(12):
-        time.sleep(5)
-        driver.switch_to.default_content()
-        # "Derived Output" sekmesi görünür olduysa sayfa yüklenmiştir
-        try:
-            frames = driver.find_elements(By.TAG_NAME, "iframe")
-            for frame in frames:
-                try:
-                    driver.switch_to.frame(frame)
-                    tabs = driver.find_elements(By.PARTIAL_LINK_TEXT, "Derived")
-                    if tabs:
-                        print(f"Sayfa yüklendi ({(i+1)*5} sn sonra)")
-                        driver.switch_to.default_content()
-                        break
-                    driver.switch_to.default_content()
-                except Exception:
-                    driver.switch_to.default_content()
-            else:
-                continue
-            break
-        except Exception:
-            pass
-    else:
-        print("Sayfa yüklenmesi 60 saniyeyi aştı, devam ediliyor...")
+    time.sleep(15)
 
     driver.switch_to.default_content()
     click_derived_output(driver)
