@@ -20,6 +20,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.ie.service import Service as IEService
 from selenium.webdriver.ie.options import Options as IEOptions
 import time
+import os
 import winreg
 
 
@@ -57,8 +58,13 @@ def open_edge_and_connect():
     options.ignore_protected_mode_settings = True
     options.require_window_focus = False
 
-    service = IEService(executable_path=IEDRIVER_PATH)
-    driver = webdriver.Ie(service=service, options=options)
+    if os.path.isfile(IEDRIVER_PATH):
+        print(f"IEDriverServer kullanılıyor: {IEDRIVER_PATH}")
+        service = IEService(executable_path=IEDRIVER_PATH)
+        driver = webdriver.Ie(service=service, options=options)
+    else:
+        print("IEDRIVER_PATH bulunamadı; Selenium Manager otomatik indirmeyi deniyor...")
+        driver = webdriver.Ie(options=options)
 
     print("Edge IE modunda açıldı, PLM'e gidiliyor...")
     driver.get(PLM_URL)
