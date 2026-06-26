@@ -1,8 +1,15 @@
 """
-Enovia PLM'de parça arama otomasyonu (Microsoft Edge).
-Kullanım:
-  1) Tüm Edge pencerelerini kapatın
-  2) Bu scripti çalıştırın - Edge'i otomatik açar, PLM'e gider ve arama yapar
+Enovia PLM'de parça arama otomasyonu - Edge'i IE MODUNDA sürer.
+
+ÖNEMLİ: PLM sitesi Internet Explorer modu gerektiriyor. Bu yüzden
+remote-debugging yerine IEDriverServer ile Edge IE modunda sürülür.
+
+KURULUM (tek seferlik):
+  1) IEDriverServer.exe (64-bit) indir:
+     https://www.selenium.dev/downloads/  (Internet Explorer Driver, x64)
+     ve aşağıdaki IEDRIVER_PATH yoluna koy (ör. C:\\WebDriver\\IEDriverServer.exe)
+  2) Tüm Edge pencerelerini kapat
+  3) Bu scripti çalıştır (registry ayarını otomatik yapar)
 """
 
 from selenium import webdriver
@@ -10,32 +17,52 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.edge.service import Service
+from selenium.webdriver.ie.service import Service as IEService
+from selenium.webdriver.ie.options import Options as IEOptions
 import time
-import subprocess
+import winreg
 
 
 PLM_URL = "https://plm.vnet.valeo.com:7001/enovia/common/emxNavigator.jsp"
 PART_NUMBER = "C597104"
 
+# IEDriverServer.exe'nin tam yolu (indirip buraya koy)
+IEDRIVER_PATH = r"C:\WebDriver\IEDriverServer.exe"
+EDGE_PATH = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+
+
+def ensure_ie_registry():
+    """IE driver'ın çalışması için gereken registry anahtarını ayarlar.
+    HKCU altında olduğu için admin gerektirmez."""
+    try:
+        key = winreg.CreateKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Internet Explorer\Main",
+        )
+        winreg.SetValueEx(key, "TabProcGrowth", 0, winreg.REG_DWORD, 0)
+        winreg.CloseKey(key)
+        print("Registry ayarı tamam (TabProcGrowth=0).")
+    except Exception as e:
+        print(f"UYARI: Registry ayarı yapılamadı: {e}")
+
 
 def open_edge_and_connect():
-    """Edge'i debug modunda başlatıp Selenium ile bağlanır."""
-    edge_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+    """Edge'i IE modunda başlatıp IEDriverServer ile bağlanır."""
+    ensure_ie_registry()
 
-    subprocess.Popen([
-        edge_path,
-        "--remote-debugging-port=9222",
-        "--user-data-dir=C:\\EdgeDebugProfile",
-        PLM_URL
-    ])
+    options = IEOptions()
+    options.attach_to_edge_chrome = True
+    options.edge_executable_path = EDGE_PATH
+    options.ignore_zoom_level = True
+    options.ignore_protected_mode_settings = True
+    options.require_window_focus = False
 
-    print("Edge açılıyor, sayfa yüklenmesi bekleniyor...")
+    service = IEService(executable_path=IEDRIVER_PATH)
+    driver = webdriver.Ie(service=service, options=options)
+
+    print("Edge IE modunda açıldı, PLM'e gidiliyor...")
+    driver.get(PLM_URL)
     time.sleep(10)
-
-    options = webdriver.EdgeOptions()
-    options.debugger_address = "127.0.0.1:9222"
-    driver = webdriver.Edge(options=options)
     return driver
 
 
