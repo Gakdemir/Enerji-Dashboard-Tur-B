@@ -97,12 +97,7 @@ def search_part(driver, part_number):
 
 
 def click_latest_drawing(driver, part_number):
-    """Arama sonuçlarından DRW_ ile başlayan en yüksek revizyonlu linke tıklar."""
-    drw_prefix = f"DRW_{part_number}"
-
-    def matches_drawing(text):
-        return text.startswith("DRW_") and part_number in text
-
+    """Arama sonuçları popup'ında DRW satırına XPath ile tıklar."""
     # Arama sonuçları popup pencerede açılıyor - ona geç
     main_window = driver.current_window_handle
     all_windows = driver.window_handles
@@ -113,57 +108,12 @@ def click_latest_drawing(driver, part_number):
                 print(f"Popup pencereye geçildi: {driver.title}")
                 break
 
-    def find_drawing_links():
-        drawing_links = []
-        # Önce mevcut sayfada ara
-        links = driver.find_elements(By.CSS_SELECTOR, "a")
-        for link in links:
-            text = link.text.strip()
-            if matches_drawing(text):
-                drawing_links.append(link)
-
-        if not drawing_links:
-            # Frame'lerin içine bak
-            frames = driver.find_elements(By.TAG_NAME, "iframe")
-            for frame in frames:
-                try:
-                    driver.switch_to.frame(frame)
-                    links = driver.find_elements(By.CSS_SELECTOR, "a")
-                    for link in links:
-                        text = link.text.strip()
-                        if matches_drawing(text):
-                            drawing_links.append(link)
-                    if drawing_links:
-                        break
-                    driver.switch_to.default_content()
-                except Exception:
-                    driver.switch_to.default_content()
-        return drawing_links
-
-    drawing_links = find_drawing_links()
-
-    if not drawing_links:
-        raise Exception(f"'{drw_prefix}' ile başlayan link bulunamadı!")
-
-    # En yüksek revizyonu bul - revision sütunu Name'in yanındaki hücrede
-    best_link = drawing_links[0]
-    best_rev = ""
-    for link in drawing_links:
-        try:
-            row = link.find_element(By.XPATH, "./ancestor::tr")
-            cells = row.find_elements(By.TAG_NAME, "td")
-            for cell in cells:
-                cell_text = cell.text.strip()
-                if len(cell_text) == 1 and cell_text.isalpha():
-                    if cell_text > best_rev:
-                        best_rev = cell_text
-                        best_link = link
-                    break
-        except Exception:
-            pass
-
-    print(f"Tıklanıyor: {best_link.text} (Revizyon: {best_rev or 'N/A'})")
-    best_link.click()
+    xpath = "/html/body/form/div[2]/div[1]/div[2]/table/tbody/tr[3]/td"
+    element = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, xpath))
+    )
+    print(f"Tıklanıyor: {element.text}")
+    element.click()
 
 
 def main():
