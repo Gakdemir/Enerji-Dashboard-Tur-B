@@ -103,30 +103,44 @@ def click_latest_drawing(driver, part_number):
     def matches_drawing(text):
         return text.startswith("DRW_") and part_number in text
 
-    # Sonuç tablosundaki tüm linkleri bul
-    links = driver.find_elements(By.CSS_SELECTOR, "a")
-    drawing_links = []
-    for link in links:
-        text = link.text.strip()
-        if matches_drawing(text):
-            drawing_links.append(link)
+    # Arama sonuçları popup pencerede açılıyor - ona geç
+    main_window = driver.current_window_handle
+    all_windows = driver.window_handles
+    if len(all_windows) > 1:
+        for w in all_windows:
+            if w != main_window:
+                driver.switch_to.window(w)
+                print(f"Popup pencereye geçildi: {driver.title}")
+                break
 
-    if not drawing_links:
-        # Frame'lerin içine bak
-        frames = driver.find_elements(By.TAG_NAME, "iframe")
-        for frame in frames:
-            try:
-                driver.switch_to.frame(frame)
-                links = driver.find_elements(By.CSS_SELECTOR, "a")
-                for link in links:
-                    text = link.text.strip()
-                    if matches_drawing(text):
-                        drawing_links.append(link)
-                if drawing_links:
-                    break
-                driver.switch_to.default_content()
-            except Exception:
-                driver.switch_to.default_content()
+    def find_drawing_links():
+        drawing_links = []
+        # Önce mevcut sayfada ara
+        links = driver.find_elements(By.CSS_SELECTOR, "a")
+        for link in links:
+            text = link.text.strip()
+            if matches_drawing(text):
+                drawing_links.append(link)
+
+        if not drawing_links:
+            # Frame'lerin içine bak
+            frames = driver.find_elements(By.TAG_NAME, "iframe")
+            for frame in frames:
+                try:
+                    driver.switch_to.frame(frame)
+                    links = driver.find_elements(By.CSS_SELECTOR, "a")
+                    for link in links:
+                        text = link.text.strip()
+                        if matches_drawing(text):
+                            drawing_links.append(link)
+                    if drawing_links:
+                        break
+                    driver.switch_to.default_content()
+                except Exception:
+                    driver.switch_to.default_content()
+        return drawing_links
+
+    drawing_links = find_drawing_links()
 
     if not drawing_links:
         raise Exception(f"'{drw_prefix}' ile başlayan link bulunamadı!")
