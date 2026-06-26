@@ -168,13 +168,20 @@ def click_latest_drawing(driver, part_number):
 def click_tab_in_frames(driver, tab_text):
     """Tüm frame'lerde belirtilen metni içeren sekmeyi bulup tıklar."""
     def find_tab():
-        links = driver.find_elements(By.PARTIAL_LINK_TEXT, tab_text)
+        # İlk 14 karakter ("Derived Output") ile ara
+        short_text = tab_text[:14] if len(tab_text) > 14 else tab_text
+        links = driver.find_elements(By.PARTIAL_LINK_TEXT, short_text)
         if links:
             return links[0]
-        spans = driver.find_elements(By.XPATH, f"//*[contains(text(), '{tab_text}')]")
+        spans = driver.find_elements(By.XPATH, f"//*[contains(text(), '{short_text}')]")
         for span in spans:
             if span.is_displayed():
                 return span
+        # XPath ile de dene
+        xpath = "/html/body/div/div[3]/div[1]/ul/li[5]/div"
+        elements = driver.find_elements(By.XPATH, xpath)
+        if elements:
+            return elements[0]
         return None
 
     tab = find_tab()
