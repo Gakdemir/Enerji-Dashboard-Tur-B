@@ -73,122 +73,101 @@ def open_edge_and_connect():
     return driver
 
 
-def search_part(driver, part_number):
-    """PLM arama kutusuna *parça_numarası yazıp aratır."""
-    search_query = f"*{part_number}*"
+SEARCH_SELECTORS = [
+    "input#AEFGlobalFullTextSearchInput",
+    "input[name='AEFGlobalFullTextSearchInput']",
+    "input[type='text'][id*='Search']",
+    "input[type='text'][id*='search']",
+    "input.search-input",
+]
 
-    possible_selectors = [
-        "input#AEFGlobalFullTextSearchInput",
-        "input[name='AEFGlobalFullTextSearchInput']",
-        "input.search-input",
-        "input[type='text'][id*='Search']",
-        "input[type='text'][id*='search']",
-    ]
 
-    search_input = None
-    for selector in possible_selectors:
+def _type_search_recursive(driver, query, depth=0, max_depth=4):
+    """Mevcut frame ve iç frame'lerde arama kutusunu bulup yazar.
+    IE modu uyumlu: get_attribute kullanmaz."""
+    for sel in SEARCH_SELECTORS:
+        for el in driver.find_elements(By.CSS_SELECTOR, sel):
+            try:
+                if el.is_displayed() and el.is_enabled():
+                    el.clear()
+                    el.send_keys(query)
+                    time.sleep(0.5)
+                    el.send_keys(Keys.RETURN)
+                    print(f"Arama yapıldı (selector: {sel})")
+                    return True
+            except Exception:
+                continue
+
+    if depth >= max_depth:
+        return False
+
+    for fr in driver.find_elements(By.CSS_SELECTOR, "frame, iframe"):
         try:
-            search_input = WebDriverWait(driver, 3).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
-            )
-            print(f"Arama kutusu bulundu: {selector}")
-            break
+            driver.switch_to.frame(fr)
         except Exception:
             continue
+        if _type_search_recursive(driver, query, depth + 1, max_depth):
+            return True
+        driver.switch_to.parent_frame()
+    return False
 
-    if not search_input:
-        inputs = driver.find_elements(By.CSS_SELECTOR, "input[type='text']")
-        print(f"Bulunan text input sayısı: {len(inputs)}")
-        for i, inp in enumerate(inputs):
-            print(f"  Input {i}: id='{inp.get_attribute('id')}', "
-                  f"name='{inp.get_attribute('name')}', "
-                  f"class='{inp.get_attribute('class')}'")
-        if inputs:
-            search_input = inputs[0]
-        else:
-            frames = driver.find_elements(By.TAG_NAME, "iframe")
-            print(f"Frame sayısı: {len(frames)}")
-            for idx, frame in enumerate(frames):
-                try:
-                    driver.switch_to.frame(frame)
-                    inputs = driver.find_elements(By.CSS_SELECTOR, "input[type='text']")
-                    if inputs:
-                        print(f"Frame {idx} içinde {len(inputs)} input bulundu")
-                        search_input = inputs[0]
-                        break
-                    driver.switch_to.default_content()
-                except Exception:
-                    driver.switch_to.default_content()
 
-    if not search_input:
-        raise Exception("Arama kutusu bulunamadı! Sayfanın yüklendiğinden emin olun.")
+def search_part(driver, part_number):
+    """PLM arama kutusuna *parça_numarası* yazıp aratır (tüm frame'lerde arar)."""
+    search_query = f"*{part_number}*"
 
-    search_input.clear()
-    search_input.send_keys(search_query)
-    time.sleep(0.5)
-    search_input.send_keys(Keys.RETURN)
-    print(f"'{search_query}' araması yapıldı.")
+    # Arama kutusu birkaç saniye sonra render olabilir - tekrar dene
+    for attempt in range(6):
+        driver.switch_to.default_content()
+        if _type_search_recursive(driver, search_query):
+            return
+        time.sleep(2)
+
+    raise Exception("Arama kutusu bulunamadı! Sayfanın yüklendiğinden emin olun.")
+
+
+def _click_drw_recursive(driver, drw_prefix, depth=0, max_depth=4):
+    """Mevcut frame ve iç frame'lerde DRW_ linkini bulup tıklar (IE uyumlu)."""
+    for link in driver.find_elements(By.PARTIAL_LINK_TEXT, "DRW_"):
+        try:
+            txt = link.text.strip()
+        except Exception:
+            continue
+        if txt.startswith(drw_prefix):
+            print(f"Tıklanıyor: {txt}")
+            link.click()
+            return True
+
+    if depth >= max_depth:
+        return False
+
+    for fr in driver.find_elements(By.CSS_SELECTOR, "frame, iframe"):
+        try:
+            driver.switch_to.frame(fr)
+        except Exception:
+            continue
+        if _click_drw_recursive(driver, drw_prefix, depth + 1, max_depth):
+            return True
+        driver.switch_to.parent_frame()
+    return False
 
 
 def click_latest_drawing(driver, part_number):
-    """Arama sonuçları popup'ında DRW satırına tıklar."""
-    main_window = driver.current_window_handle
-    all_windows = driver.window_handles
-    print(f"Toplam pencere sayısı: {len(all_windows)}")
-
-    for w in all_windows:
-        driver.switch_to.window(w)
-        print(f"  Pencere: {driver.title} - URL: {driver.current_url}")
-
-    if len(all_windows) > 1:
-        driver.switch_to.window(all_windows[-1])
-        print(f"Popup pencereye geçildi: {driver.title}")
-
-    frames = driver.find_elements(By.TAG_NAME, "iframe")
-    print(f"Frame sayısı: {len(frames)}")
-    for i, frame in enumerate(frames):
-        print(f"  Frame {i}: id='{frame.get_attribute('id')}', "
-              f"name='{frame.get_attribute('name')}', "
-              f"src='{frame.get_attribute('src')}'")
-
+    """Arama sonuçlarında DRW_<part> linkini bulup tıklar.
+    Sonuçlar popup pencerede açılırsa o pencereye geçer."""
     drw_prefix = f"DRW_{part_number}"
 
-    def find_drw_link():
-        links = driver.find_elements(By.PARTIAL_LINK_TEXT, "DRW_")
-        for link in links:
-            if link.text.strip().startswith(drw_prefix):
-                return link
-        return None
+    # Sonuçların yüklenmesi için birkaç kez dene (popup + frame'ler)
+    for attempt in range(8):
+        # Yeni pencere açıldıysa sonuncusuna geç
+        windows = driver.window_handles
+        if len(windows) > 1:
+            driver.switch_to.window(windows[-1])
+        driver.switch_to.default_content()
 
-    link = find_drw_link()
-    if link:
-        print(f"Tıklanıyor: {link.text}")
-        link.click()
-        return
-
-    for i, frame in enumerate(frames):
-        try:
-            driver.switch_to.frame(frame)
-            link = find_drw_link()
-            if link:
-                print(f"Frame {i} içinde bulundu. Tıklanıyor: {link.text}")
-                link.click()
-                return
-            inner_frames = driver.find_elements(By.TAG_NAME, "iframe")
-            for j, inner in enumerate(inner_frames):
-                try:
-                    driver.switch_to.frame(inner)
-                    link = find_drw_link()
-                    if link:
-                        print(f"Frame {i}/{j} içinde bulundu. Tıklanıyor: {link.text}")
-                        link.click()
-                        return
-                    driver.switch_to.parent_frame()
-                except Exception:
-                    driver.switch_to.parent_frame()
-            driver.switch_to.default_content()
-        except Exception:
-            driver.switch_to.default_content()
+        if _click_drw_recursive(driver, drw_prefix):
+            return
+        time.sleep(2)
 
     raise Exception(f"'{drw_prefix}' ile başlayan link bulunamadı!")
 
