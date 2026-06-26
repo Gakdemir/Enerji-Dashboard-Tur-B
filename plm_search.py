@@ -41,7 +41,7 @@ def open_edge_and_connect():
 
 def search_part(driver, part_number):
     """PLM arama kutusuna *parça_numarası yazıp aratır."""
-    search_query = f"*{part_number}"
+    search_query = f"*{part_number}*"
 
     possible_selectors = [
         "input#AEFGlobalFullTextSearchInput",
@@ -100,12 +100,15 @@ def click_latest_drawing(driver, part_number):
     """Arama sonuçlarından DRW_ ile başlayan en yüksek revizyonlu linke tıklar."""
     drw_prefix = f"DRW_{part_number}"
 
+    def matches_drawing(text):
+        return text.startswith("DRW_") and part_number in text
+
     # Sonuç tablosundaki tüm linkleri bul
     links = driver.find_elements(By.CSS_SELECTOR, "a")
     drawing_links = []
     for link in links:
         text = link.text.strip()
-        if text.startswith(drw_prefix):
+        if matches_drawing(text):
             drawing_links.append(link)
 
     if not drawing_links:
@@ -117,7 +120,7 @@ def click_latest_drawing(driver, part_number):
                 links = driver.find_elements(By.CSS_SELECTOR, "a")
                 for link in links:
                     text = link.text.strip()
-                    if text.startswith(drw_prefix):
+                    if matches_drawing(text):
                         drawing_links.append(link)
                 if drawing_links:
                     break
