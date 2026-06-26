@@ -12,7 +12,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.edge.service import Service
 import time
-import subprocess
 
 
 PLM_URL = "https://plm.vnet.valeo.com:7001/enovia/common/emxNavigator.jsp"
@@ -20,22 +19,21 @@ PART_NUMBER = "C597104"
 
 
 def open_edge_and_connect():
-    """Edge'i debug modunda başlatıp Selenium ile bağlanır."""
-    edge_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-
-    subprocess.Popen([
-        edge_path,
-        "--remote-debugging-port=9222",
-        "--user-data-dir=C:\\EdgeDebugProfile",
-        PLM_URL
-    ])
-
-    print("Edge açılıyor, sayfa yüklenmesi bekleniyor...")
-    time.sleep(10)
-
+    """Edge'i Selenium ile başlatır (debug modu olmadan)."""
     options = webdriver.EdgeOptions()
-    options.debugger_address = "127.0.0.1:9222"
+    # Kullanıcı profilini kullan (kayıtlı şifreler için)
+    options.add_argument(r"--user-data-dir=C:\Users\gakdemir\AppData\Local\Microsoft\Edge\User Data")
+    options.add_argument("--profile-directory=Default")
+    # IE uyumluluk sorunlarını önle
+    options.add_argument("--disable-features=msEdgeIEModeTest")
+    options.add_argument("--no-first-run")
+
     driver = webdriver.Edge(options=options)
+    print("Edge açıldı, PLM'e gidiliyor...")
+    driver.get(PLM_URL)
+
+    print("Sayfa yüklenmesi bekleniyor...")
+    time.sleep(10)
     return driver
 
 
