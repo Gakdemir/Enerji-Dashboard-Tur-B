@@ -23,6 +23,15 @@ import time
 import os
 import getpass
 import winreg
+import subprocess
+
+
+def paste_text(element, text):
+    """Clipboard üzerinden yapıştırarak hızlı metin girer (IE driver send_keys çok yavaş)."""
+    subprocess.run(["clip.exe"], input=text.encode("utf-16-le"), check=True)
+    element.send_keys(Keys.CONTROL, "a")
+    element.send_keys(Keys.CONTROL, "v")
+    time.sleep(0.3)
 
 
 PLM_URL = "https://plm.vnet.valeo.com:7001/enovia/common/emxNavigator.jsp"
@@ -89,9 +98,8 @@ def _type_search_recursive(driver, query, depth=0, max_depth=4):
         for el in driver.find_elements(By.CSS_SELECTOR, sel):
             try:
                 if el.is_displayed() and el.is_enabled():
-                    el.clear()
-                    el.send_keys(query)
-                    time.sleep(0.5)
+                    el.click()
+                    paste_text(el, query)
                     el.send_keys(Keys.RETURN)
                     print(f"Arama yapıldı (selector: {sel})")
                     return True
@@ -253,10 +261,10 @@ def login(driver, username, password):
         return
 
     pass_field = pass_els[0]
-    user_field.clear()
-    user_field.send_keys(username)
-    pass_field.clear()
-    pass_field.send_keys(password)
+    user_field.click()
+    paste_text(user_field, username)
+    pass_field.click()
+    paste_text(pass_field, password)
     pass_field.send_keys(Keys.RETURN)
     print("Giriş bilgileri gönderildi, bekleniyor...")
     time.sleep(8)
